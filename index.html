@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Austin Ginder's Music</title>
+    <link href="style.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <style>
+      [v-cloak] > * {
+        display:none;
+      }
+    </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    <v-app>
+      <v-main>
+        <v-toolbar dark color="primary">
+            <v-toolbar-title>Austin Ginder's Music</v-toolbar-title>
+            <v-spacer></v-spacer>
+        </v-toolbar>
+        <v-container>
+            <v-row>
+              <v-col sm="12" md="3"></v-col>
+              <v-col sm="12" md="6">
+                <v-list class="elevation-2">
+                    <v-list-item
+                      v-for="item in items"
+                      :key="item.title"
+                      target="_blank"
+                      :href=`audio/${item.audio}.webm`
+                      @click.prevent="selected_item = item; playAudio()"
+                    >
+                        <v-list-item-icon>
+                            <v-icon>mdi-play-box-outline</v-icon>
+                        </v-list-item-icon>
+                      <v-list-item-content>
+                        <v-list-item-title>
+                            {{ item.title }}
+                        </v-list-item-title>
+                        <v-list-item-subtitle>
+                          <v-icon small>mdi-clock-outline</v-icon> {{ item.duration }} <v-icon small class="ml-3">mdi-calendar-clock</v-icon> {{ item.date }} <v-icon small class="ml-3">mdi-account-music</v-icon> {{ item.author }}
+                        </v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                </v-list>
+              </v-col>
+              <v-col sm="12" md="3"></v-col>
+            </v-row>
+        </v-container>
+      </v-main>
+      <v-footer fixed padless>
+        <v-card width="100%" color="grey lighten-5">
+          <v-card-text style="max-width:400px;margin:auto" class="text-center">
+              <v-btn icon class="ma-2" @click.native="sound.playing() ? sound.pause() : sound.play()" :disabled="!loaded">
+                  <v-icon large v-if="!playing || paused">mdi-play-circle</v-icon>
+                  <v-icon large v-else>mdi-pause-circle</v-icon>
+              </v-btn>
+              <v-btn icon class="ma-2" @click.native="sound.stop()" :disabled="!loaded">
+                  <v-icon large>mdi-stop-circle</v-icon>
+              </v-btn>
+              <v-btn icon class="ma-2" @click.native="sound.mute( true )" :disabled="!loaded" v-if="! isMuted">
+                  <v-icon large>mdi-volume-high</v-icon>
+              </v-btn>
+              <v-btn icon class="ma-2" @click.native="sound.mute( false )" :disabled="!loaded" v-else>
+                <v-icon large>mdi-volume-off</v-icon>
+              </v-btn>
+              <v-btn icon class="ma-2" v-if="loaded" :href=`audio/${selected_item.audio}.mp3` target="_blank">
+                  <v-icon large>mdi-download-circle</v-icon>
+              </v-btn>
+              <v-slider v-model="playerVolume" prepend-icon="mdi-volume-high" max="1" step="0.01" min="0"></v-slider>
+              <v-progress-linear hide-details stream v-model="percentage" height="20" @change="sound.seek( duration * ( percentage / 100 ) )" :disabled="!loaded"></v-progress-linear>
+              <p>{{ currentTime | formatTime }} / {{ duration | formatTime }}</p>
+          </v-card-text>
+      </v-card>
+      </v-footer>
+    </v-app>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/siriwave@2.2.3/dist/siriwave.umd.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify(),
+      data: {
+          items: [
+              { date: "December 4th, 2021", author: "Austin Ginder", title: "Hello T1", duration: "2:27", audio: "2021-12-04 Hello T1" },
+              { date: "December 2nd, 2021", author: "Austin Ginder", title: "Hello M2", duration: "2:02", audio: "2021-12-02 Hello M2" },
+              { date: "November 27th, 2021", author: "Austin Ginder", title: "Hello L4", duration: "2:23", audio: "2021-11-27 Hello L4" },
+              { date: "November 26th, 2021", author: "Austin Ginder", title: "Hello A1", duration: "1:32", audio: "2021-11-26 Hello A1" },
+              { date: "October 21st, 2021", author: "Austin Ginder", title: "Hello World", duration: "1:28", audio: "2021-10-21 Hello World" },
+          ],
+          selected_item: {},
+          duration: 0,
+          isMuted: false,
+          paused: false,
+          playing: false,
+          playerVolume: 1,
+          percentage: 0,
+          sound: {},
+          loaded: false,
+      },
+      filters: {
+        formatTime: function ( value ) {
+          var sec_num = parseInt(value, 10); // don't forget the second param
+          var hours   = Math.floor(sec_num / 3600);
+          var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+          var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+          if (hours   < 10) {hours   = "0"+hours;}
+          if (minutes < 10) {minutes = "0"+minutes;}
+          if (seconds < 10) {seconds = "0"+seconds;}
+          return minutes + ':' + seconds;
+        },
+      },
+      watch: {
+        playerVolume() {
+          Howler.volume(this.playerVolume);
+        }
+      },
+      computed: {
+        currentTime() {
+          return this.duration * ( this.percentage / 100 )
+        }
+      },
+      methods: {
+        playAudio() {
+          self = this
+          Howler.unload()
+          this.sound = new Howl({
+            src: [ `audio/${this.selected_item.audio}.webm`, `audio/${this.selected_item.audio}.mp3` ],
+            onmute: function() { self.toggleMute() },
+            onplay: function() { 
+              self.togglePlay()
+              requestAnimationFrame(self.step)
+            },
+            onpause: function() { self.togglePlay() },
+            onstop: function() { self.togglePlay() },
+          })
+          this.sound.once('load', function(){
+            self.duration = self.sound.duration()
+          });
+          this.sound.play()
+          this.playing = true
+          this.loaded = true
+          this.percentage = this.sound.seek()
+        },
+        setPosition() {
+            change_to = this.duration * ( this.percentage / 100 )
+            console.log( change_to )
+            this.sound.seek( change_to )
+        },
+        toggleMute() {
+          this.isMuted = this.sound.mute()
+        },
+        togglePlay() {
+          this.playing = this.sound.playing()
+          this.paused = ! this.sound.playing()
+        },
+        step() {
+          var seek = this.sound.seek() || 0
+          this.percentage = seek / this.duration * 100
+          if (this.sound.playing()) {
+            setTimeout(function() {
+              requestAnimationFrame(self.step)
+              }, 100)
+          }
+        }
+      },
+    })
+  </script>
+</body>
+</html>

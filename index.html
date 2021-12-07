@@ -20,8 +20,9 @@
         <v-toolbar dark color="primary">
             <v-toolbar-title>Austin Ginder's Music</v-toolbar-title>
             <v-spacer></v-spacer>
+            <v-btn href="https://github.com/austinginder/music/" icon><v-icon>mdi-github</v-icon></v-btn>
         </v-toolbar>
-        <v-container>
+        <v-container fluid>
             <v-row>
               <v-col sm="12" md="3"></v-col>
               <v-col sm="12" md="6">
@@ -30,6 +31,7 @@
                       v-for="item in items"
                       :key="item.title"
                       target="_blank"
+                      two-line
                       :href=`audio/${item.audio}.webm`
                       @click.prevent="selected_item = item; playAudio()"
                     >
@@ -41,7 +43,7 @@
                             {{ item.title }}
                         </v-list-item-title>
                         <v-list-item-subtitle>
-                          <v-icon small>mdi-clock-outline</v-icon> {{ item.duration }} <v-icon small class="ml-3">mdi-calendar-clock</v-icon> {{ item.date }} <v-icon small class="ml-3">mdi-account-music</v-icon> {{ item.author }}
+                          <v-icon small>mdi-clock-outline</v-icon> {{ item.duration }} <v-icon small class="ml-3">mdi-calendar-clock</v-icon> {{ item.date }}
                         </v-list-item-subtitle>
                       </v-list-item-content>
                     </v-list-item>
@@ -51,8 +53,8 @@
             </v-row>
         </v-container>
       </v-main>
-      <v-footer fixed padless>
-        <v-card width="100%" color="grey lighten-5">
+      <v-footer fixed padless app>
+        <v-card width="100%" color="grey lighten-4">
           <v-card-text style="max-width:400px;margin:auto" class="text-center">
               <v-btn icon class="ma-2" @click.native="sound.playing() ? sound.pause() : sound.play()" :disabled="!loaded">
                   <v-icon large v-if="!playing || paused">mdi-play-circle</v-icon>
@@ -148,11 +150,6 @@
           this.playing = true
           this.loaded = true
           this.percentage = this.sound.seek()
-        },
-        setPosition() {
-            change_to = this.duration * ( this.percentage / 100 )
-            console.log( change_to )
-            this.sound.seek( change_to )
         },
         toggleMute() {
           this.isMuted = this.sound.mute()

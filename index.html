@@ -31,7 +31,6 @@
                       v-for="item in items"
                       :key="item.title"
                       target="_blank"
-                      two-line
                       :href=`audio/${item.audio}.webm`
                       @click.prevent="selected_item = item; playAudio()"
                     >
@@ -43,7 +42,7 @@
                             {{ item.title }}
                         </v-list-item-title>
                         <v-list-item-subtitle>
-                          <v-icon small>mdi-clock-outline</v-icon> {{ item.duration }} <v-icon small class="ml-3">mdi-calendar-clock</v-icon> {{ item.date }}
+                          <v-icon small>mdi-clock-outline</v-icon> {{ item.duration }} <v-icon small class="ml-5">mdi-calendar-clock</v-icon> {{ item.date }}
                         </v-list-item-subtitle>
                       </v-list-item-content>
                     </v-list-item>
@@ -90,11 +89,11 @@
       vuetify: new Vuetify(),
       data: {
           items: [
-              { date: "December 4th, 2021", author: "Austin Ginder", title: "Hello T1", duration: "2:27", audio: "2021-12-04 Hello T1" },
-              { date: "December 2nd, 2021", author: "Austin Ginder", title: "Hello M2", duration: "2:02", audio: "2021-12-02 Hello M2" },
-              { date: "November 27th, 2021", author: "Austin Ginder", title: "Hello L4", duration: "2:23", audio: "2021-11-27 Hello L4" },
-              { date: "November 26th, 2021", author: "Austin Ginder", title: "Hello A1", duration: "1:32", audio: "2021-11-26 Hello A1" },
-              { date: "October 21st, 2021", author: "Austin Ginder", title: "Hello World", duration: "1:28", audio: "2021-10-21 Hello World" },
+              { date: "Dec 4th, 2021", author: "Austin Ginder", title: "Hello T1", duration: "2:27", audio: "2021-12-04 Hello T1" },
+              { date: "Dec 2nd, 2021", author: "Austin Ginder", title: "Hello M2", duration: "2:02", audio: "2021-12-02 Hello M2" },
+              { date: "Nov 27th, 2021", author: "Austin Ginder", title: "Hello L4", duration: "2:23", audio: "2021-11-27 Hello L4" },
+              { date: "Nov 26th, 2021", author: "Austin Ginder", title: "Hello A1", duration: "1:32", audio: "2021-11-26 Hello A1" },
+              { date: "Oct 21st, 2021", author: "Austin Ginder", title: "Hello World", duration: "1:28", audio: "2021-10-21 Hello World" },
           ],
           selected_item: {},
           duration: 0,

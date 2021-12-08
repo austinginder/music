@@ -41,7 +41,13 @@
         </v-toolbar>
         <v-card flat class="text-center">
           <v-card-text>
-            <v-icon class="mb-1">mdi-folder-music-outline</v-icon> {{ items.length }} tracks <v-icon small class="ml-4 mb-1">mdi-clock-outline</v-icon> {{ totalTime }} duration
+            <v-icon class="mb-1">mdi-folder-music-outline</v-icon> {{ items.length }} tracks <v-icon small class="ml-4 mb-1">mdi-clock-outline</v-icon> {{ totalTime }} duration 
+            <v-switch small inset hide-details style="margin:auto;display:inline-block; position:relative; top: 2px" class="ml-4" v-model="autoplay">
+              <template v-slot:label>
+                <span class="body-2">autoplay</span>
+              </v-progress-circular>
+              </template>
+            </v-switch>
           </v-card-text>
         </v-card>
         <v-container>
@@ -76,7 +82,7 @@
       </v-main>
       <v-footer fixed padless app>
         <v-card width="100%" color="grey lighten-4">
-          <v-card-text style="max-width:400px;margin:auto" class="text-center">
+          <v-card-text style="max-width:400px;margin:auto" class="text-center pa-2">
               <v-btn icon class="ma-2" @click.native="sound.playing() ? sound.pause() : sound.play()" :disabled="!loaded">
                   <v-icon large v-if="!playing || paused">mdi-play-circle</v-icon>
                   <v-icon large v-else>mdi-pause-circle</v-icon>
@@ -93,7 +99,8 @@
               <v-btn icon class="ma-2" v-if="loaded" :href=`audio/${selected_item.audio}.mp3` target="_blank">
                   <v-icon large>mdi-download-circle</v-icon>
               </v-btn>
-              <v-slider v-model="playerVolume" prepend-icon="mdi-volume-high" max="1" step="0.01" min="0"></v-slider>
+              
+              <v-slider v-model="playerVolume" prepend-icon="mdi-volume-high" max="1" step="0.01" min="0" v-show="!playerVolume"></v-slider>
               <v-progress-linear hide-details stream v-model="percentage" height="20" @change="sound.seek( duration * ( percentage / 100 ) )" :disabled="!loaded"></v-progress-linear>
               <p>{{ currentTime | formatTime }} / {{ duration | formatTime }}</p>
           </v-card-text>
@@ -104,7 +111,6 @@
   <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/siriwave@2.2.3/dist/siriwave.umd.js"></script>
   <script>
     new Vue({
       el: '#app',
@@ -123,6 +129,7 @@
           isMuted: false,
           paused: false,
           playing: false,
+          autoplay: true,
           playerVolume: 1,
           percentage: 0,
           sound: {},
@@ -191,6 +198,7 @@
             },
             onpause: function() { self.togglePlay() },
             onstop: function() { self.togglePlay() },
+            onend: function() { self.playNext() },
           })
           this.sound.once('load', function(){
             self.duration = self.sound.duration()
@@ -206,6 +214,21 @@
         togglePlay() {
           this.playing = this.sound.playing()
           this.paused = ! this.sound.playing()
+        },
+        playNext() {
+          if ( ! this.autoplay ) {
+            return
+          }
+          this.items.forEach( ( item, index ) => {
+            if ( item == this.selected_item ) { 
+              next_item = index + 1
+            }
+          })
+          if ( this.items.length <= next_item ) {
+            return
+          }
+          this.selected_item = this.items[next_item]
+          this.playAudio()
         },
         step() {
           var seek = this.sound.seek() || 0

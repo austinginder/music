@@ -39,7 +39,12 @@
               <span><v-icon small>mdi-open-in-new</v-icon> github.com/austinginder/music</span>
             </v-tooltip>
         </v-toolbar>
-        <v-container fluid>
+        <v-card flat class="text-center">
+          <v-card-text>
+            <v-icon class="mb-1">mdi-folder-music-outline</v-icon> {{ items.length }} tracks <v-icon small class="ml-4 mb-1">mdi-clock-outline</v-icon> {{ totalTime }} duration
+          </v-card-text>
+        </v-card>
+        <v-container>
             <v-row>
               <v-col sm="12" md="3"></v-col>
               <v-col sm="12" md="6">
@@ -52,7 +57,7 @@
                       @click.prevent="selected_item = item; playAudio()"
                     >
                       <v-list-item-avatar>
-                          <v-icon>mdi-play-box</v-icon>
+                          <v-icon large>mdi-play-box</v-icon>
                       </v-list-item-avatar>
                       <v-list-item-content>
                         <v-list-item-title>
@@ -144,6 +149,33 @@
       computed: {
         currentTime() {
           return this.duration * ( this.percentage / 100 )
+        },
+        totalTime() {
+          var minutes = 0
+          var seconds = 0
+          var hours = 0
+
+          this.items.forEach( item => {
+              time = item.duration.split(":")
+              minutes = minutes + parseInt( time[0] )
+              seconds = seconds + parseInt( time[1] )
+          })
+
+          if ( seconds > 60 ) {
+            minutes = minutes + parseInt( seconds / 60 )
+            seconds = seconds % 60
+          }
+
+          if ( minutes > 60 ) {
+            hours = hours + parseInt( minutes / 60 )
+            minutes = minutes % 60
+          }
+
+          if ( hours > 0 ) {
+            return `${hours}:${minutes}:${seconds}`
+          }
+
+          return `${minutes}:${seconds}`
         }
       },
       methods: {

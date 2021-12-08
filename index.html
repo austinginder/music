@@ -20,7 +20,24 @@
         <v-toolbar dark color="primary">
             <v-toolbar-title>Austin Ginder's Music</v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-btn href="https://github.com/austinginder/music/" icon><v-icon>mdi-github</v-icon></v-btn>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn href="https://austinginder.com" icon target="_blank" v-bind="attrs" v-on="on"><v-icon>mdi-home</v-icon></v-btn>
+              </template>
+              <span><v-icon small>mdi-open-in-new</v-icon> austinginder.com</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn href="https://soundcloud.com/austinginder/" icon target="_blank" v-bind="attrs" v-on="on"><v-icon>mdi-soundcloud</v-icon></v-btn>
+              </template>
+              <span><v-icon small>mdi-open-in-new</v-icon> soundcloud.com/austinginder</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn href="https://github.com/austinginder/music/" icon target="_blank" v-bind="attrs" v-on="on"><v-icon>mdi-github</v-icon></v-btn>
+              </template>
+              <span><v-icon small>mdi-open-in-new</v-icon> github.com/austinginder/music</span>
+            </v-tooltip>
         </v-toolbar>
         <v-container fluid>
             <v-row>

@@ -39,22 +39,14 @@
               <span><v-icon small>mdi-open-in-new</v-icon> github.com/austinginder/music</span>
             </v-tooltip>
         </v-toolbar>
-        <v-card flat class="text-center">
-          <v-card-text>
-            <v-icon class="mb-1">mdi-folder-music-outline</v-icon> {{ items.length }} tracks <v-icon small class="ml-4 mb-1">mdi-clock-outline</v-icon> {{ totalTime }} duration 
-            <v-switch small inset hide-details style="margin:auto;display:inline-block; position:relative; top: 2px" class="ml-4" v-model="autoplay">
-              <template v-slot:label>
-                <span class="body-2">autoplay</span>
-              </v-progress-circular>
-              </template>
-            </v-switch>
-          </v-card-text>
+        <v-card flat class="text-center mt-4">
+            <v-icon size="20">mdi-folder-music-outline</v-icon> {{ items.length }} tracks <v-icon size="20" class="ml-4 mb-1">mdi-clock-outline</v-icon> {{ totalTime }} duration 
         </v-card>
         <v-container>
             <v-row>
-              <v-col sm="12" md="3"></v-col>
-              <v-col sm="12" md="6">
-                <v-list class="elevation-2">
+              <v-col cols="12">
+                <v-list class="elevation-2" max-width="800px" style="margin:auto;">
+                  <v-list-item-group v-model="selected_item_index" color="primary">
                     <v-list-item
                       v-for="item in items"
                       :key="item.title"
@@ -74,9 +66,9 @@
                         </v-list-item-subtitle>
                       </v-list-item-content>
                     </v-list-item>
+                    </v-list-item-group>
                 </v-list>
               </v-col>
-              <v-col sm="12" md="3"></v-col>
             </v-row>
         </v-container>
       </v-main>
@@ -99,6 +91,23 @@
               <v-btn icon class="ma-2" v-if="loaded" :href=`audio/${selected_item.audio}.mp3` target="_blank">
                   <v-icon large>mdi-download-circle</v-icon>
               </v-btn>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon class="ma-2" v-show="autoplay" @click="autoplay = false" v-bind="attrs" v-on="on">
+                    <v-icon large>mdi-repeat</v-icon>
+                  </v-btn>
+                </template>
+                <span>Repeat</span>
+              </v-tooltip>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon class="ma-2" v-show="! autoplay"  @click="autoplay = true" v-bind="attrs" v-on="on">
+                    <v-icon large>mdi-repeat-off</v-icon>
+                  </v-btn>
+                </template>
+                <span>Repeat</span>
+              </v-tooltip>
+              
               
               <v-slider v-model="playerVolume" prepend-icon="mdi-volume-high" max="1" step="0.01" min="0" v-show="!playerVolume"></v-slider>
               <v-progress-linear hide-details stream v-model="percentage" height="20" @change="sound.seek( duration * ( percentage / 100 ) )" :disabled="!loaded">
@@ -127,6 +136,7 @@
               { date: "Oct 21st, 2021", author: "Austin Ginder", title: "Hello World", duration: "1:28", audio: "2021-10-21 Hello World" },
           ],
           selected_item: {},
+          selected_item_index: null,
           duration: 0,
           isMuted: false,
           paused: false,
@@ -230,6 +240,7 @@
             return
           }
           this.selected_item = this.items[next_item]
+          this.selected_item_index = next_item
           this.playAudio()
         },
         step() {

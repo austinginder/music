@@ -101,7 +101,9 @@
               </v-btn>
               
               <v-slider v-model="playerVolume" prepend-icon="mdi-volume-high" max="1" step="0.01" min="0" v-show="!playerVolume"></v-slider>
-              <v-progress-linear hide-details stream v-model="percentage" height="20" @change="sound.seek( duration * ( percentage / 100 ) )" :disabled="!loaded"></v-progress-linear>
+              <v-progress-linear hide-details stream v-model="percentage" height="20" @change="sound.seek( duration * ( percentage / 100 ) )" :disabled="!loaded">
+                <span v-show="selected_item.title" class="white--text caption">{{ selected_item.title }}</span>
+              </v-progress-linear>
               <p>{{ currentTime | formatTime }} / {{ duration | formatTime }}</p>
           </v-card-text>
       </v-card>

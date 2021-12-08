@@ -40,7 +40,7 @@
             </v-tooltip>
         </v-toolbar>
         <v-card flat class="text-center mt-4">
-            <v-icon size="20">mdi-folder-music-outline</v-icon> {{ items.length }} tracks <v-icon size="20" class="ml-4 mb-1">mdi-clock-outline</v-icon> {{ totalTime }} duration 
+            <v-icon size="20" class="mb-1">mdi-folder-music-outline</v-icon> {{ items.length }} tracks <v-icon size="20" class="ml-4 mb-1">mdi-clock-outline</v-icon> {{ totalTime }} duration 
         </v-card>
         <v-container>
             <v-row>
@@ -62,7 +62,7 @@
                             {{ item.title }}
                         </v-list-item-title>
                         <v-list-item-subtitle>
-                          <v-icon small>mdi-clock-outline</v-icon> {{ item.duration }} <v-icon small class="ml-5">mdi-calendar-clock</v-icon> {{ item.date }}
+                          <v-icon size="18" class="mb-1">mdi-clock-outline</v-icon> {{ item.duration }} <v-icon size="18" class="ml-5">mdi-calendar-clock</v-icon> {{ item.date }}
                         </v-list-item-subtitle>
                       </v-list-item-content>
                     </v-list-item>

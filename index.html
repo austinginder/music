@@ -193,11 +193,17 @@
           if ( hours > 0 ) {
             return `${hours}:${minutes}:${seconds}`
           }
-
+          minutes = this.pad( minutes )
+          seconds = this.pad( seconds )
           return `${minutes}:${seconds}`
         }
       },
       methods: {
+        pad(num) {
+          num = num.toString();
+          while (num.length < 2) num = "0" + num;
+          return num;
+        },
         playAudio() {
           self = this
           Howler.unload()

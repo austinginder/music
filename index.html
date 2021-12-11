@@ -149,6 +149,13 @@
           sound: {},
           loaded: false,
       },
+      mounted() {
+        window.addEventListener('keydown', (e) => {
+          if (e.key == 32 || e.key == ' ') {
+            this.sound.playing() ? this.sound.pause() : this.sound.play()
+          }
+        })
+      },
       filters: {
         formatTime: function ( value ) {
           var sec_num = parseInt(value, 10); // don't forget the second param

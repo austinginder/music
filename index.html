@@ -352,22 +352,26 @@
           }
           if ( this.selected_item.album == "" || ! this.selected_item.album ) {
             found_track = false
-            this.singleTracks.forEach( t => {
+            should_skip = false
+            this.singleTracks.forEach( ( t, index ) => {
+              if ( should_skip ) {
+                return
+              }
               if ( found_track ) {
+                should_skip = true
                 this.albums.forEach( a => a.position = "" )
-                this.tracks.forEach( ( item, index ) => {
-                  if ( item == t ) {
-                    this.selected_item = this.tracks[index]
-                    this.selected_item_index = index
-                    this.playAudio()
-                    return
-                  }
-                })
+                this.selected_item = this.singleTracks[index]
+                this.selected_item_index = index
+                this.playAudio()
+                return
               }
               if ( t.title == this.selected_item.title ) {
                 found_track = true
               }
             })
+            if ( should_skip ) {
+                return
+              }
             if ( this.albums && this.albums.length > 0 ) {
               next_song = this.albumTracks( this.albums[0] )
               this.albums[0].position = 0

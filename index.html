@@ -51,7 +51,7 @@
                       v-for="item in singleTracks"
                       :key="item.title"
                       target="_blank"
-                      :href=`audio/${item.audio}.webm`
+                      :href=`${share_url}/${item.audio}.webm`
                       @click.prevent="selected_item = item; playAudio()"
                     >
                       <v-list-item-avatar>
@@ -104,7 +104,7 @@
                         v-for="item in albumTracks( album )"
                         :key="item.title"
                         target="_blank"
-                        :href=`audio/${item.audio}.webm`
+                        :href=`${share_url}/${item.audio}.webm`
                         @click.prevent="selected_item = item; playAudio()"
                       >
                         <v-list-item-avatar>
@@ -144,7 +144,7 @@
               <v-btn icon class="ma-2" @click.native="sound.mute( false )" :disabled="!loaded" v-else>
                 <v-icon large>mdi-volume-off</v-icon>
               </v-btn>
-              <v-btn icon class="ma-2" v-if="loaded" :href=`audio/${selected_item.audio}.mp3` target="_blank">
+              <v-btn icon class="ma-2" v-if="loaded" :href=`${share_url}/${selected_item.audio}.mp3` target="_blank">
                   <v-icon large>mdi-download-circle</v-icon>
               </v-btn>
               <v-tooltip bottom>
@@ -181,19 +181,22 @@
       el: '#app',
       vuetify: new Vuetify(),
       data: {
+          local_share_url: "/music",
+          share_url: "https://f001.backblazeb2.com/file/Ginder/Music",
           tracks: [
-              { date: "Dec 21th, 2021", author: "Austin Ginder", title: "Panther on the Move", duration: "6:14", audio: "2021-12-21 Panther on the Move" },
+              { date: "Dec 23th, 2021", author: "Austin Ginder", title: "Starfish Twinkle", duration: "2:51", audio: "2021-12-23 Starfish Twinkle" },
+              { date: "Dec 21th, 2021", author: "Austin Ginder", title: "Panther On The Move", duration: "6:14", audio: "2021-12-21 Panther on the Move" },
               { date: "Dec 19th, 2021", author: "Austin Ginder", title: "Little Sea Turtle", duration: "4:20", audio: "2021-12-19 Little Sea Turtle" },
               { date: "Dec 16th, 2021", author: "Austin Ginder", title: "Manatees Hiding", duration: "4:41", audio: "2021-12-16 Manatees Hiding" },
-              { date: "Dec 13th, 2021", author: "Austin Ginder", title: "Hello C35", duration: "4:00", audio: "2021-12-13 Hello C35", album: "Hello XYZ", position: 9 },
-              { date: "Dec 10th, 2021", author: "Austin Ginder", title: "Hello E3PO", duration: "3:39", audio: "2021-12 Hello E3PO", album: "Hello XYZ", position: 8 },
-              { date: "Dec 9th, 2021", author: "Austin Ginder", title: "Hello A37", duration: "4:15", audio: "2021-12-09 Hello A37", album: "Hello XYZ", position: 4 },
-              { date: "Dec 7th, 2021", author: "Austin Ginder", title: "Hello i5", duration: "3:52", audio: "2021-12-07 Hello i5", album: "Hello XYZ", position: 6 },
-              { date: "Dec 4th, 2021", author: "Austin Ginder", title: "Hello T100", duration: "2:27", audio: "2021-12-04 Hello T100", album: "Hello XYZ", position: 3 },
-              { date: "Dec 2nd, 2021", author: "Austin Ginder", title: "Hello M2", duration: "3:46", audio: "2021-12-02 Hello M2", album: "Hello XYZ", position: 7 },
-              { date: "Nov 27th, 2021", author: "Austin Ginder", title: "Hello L500", duration: "2:23", audio: "2021-11-27 Hello L500", album: "Hello XYZ", position: 2 },
-              { date: "Nov 26th, 2021", author: "Austin Ginder", title: "Hello A1", duration: "2:37", audio: "2021-11-26 Hello A1", album: "Hello XYZ", position: 5 },
-              { date: "Oct 21st, 2021", author: "Austin Ginder", title: "Hello World", duration: "3:06", audio: "2021-10-21 Hello World", album: "Hello XYZ", position: 1 },
+              { date: "Dec 13th, 2021", author: "Austin Ginder", title: "C35", duration: "4:00", audio: "2021-12-13 Hello C35", album: "Hello XYZ", position: 9 },
+              { date: "Dec 10th, 2021", author: "Austin Ginder", title: "E3PO", duration: "3:39", audio: "2021-12 Hello E3PO", album: "Hello XYZ", position: 8 },
+              { date: "Dec 9th, 2021", author: "Austin Ginder", title: "A37", duration: "4:15", audio: "2021-12-09 Hello A37", album: "Hello XYZ", position: 4 },
+              { date: "Dec 7th, 2021", author: "Austin Ginder", title: "i5", duration: "3:52", audio: "2021-12-07 Hello i5", album: "Hello XYZ", position: 6 },
+              { date: "Dec 4th, 2021", author: "Austin Ginder", title: "T100", duration: "2:27", audio: "2021-12-04 Hello T100", album: "Hello XYZ", position: 3 },
+              { date: "Dec 2nd, 2021", author: "Austin Ginder", title: "M2", duration: "3:46", audio: "2021-12-02 Hello M2", album: "Hello XYZ", position: 7 },
+              { date: "Nov 27th, 2021", author: "Austin Ginder", title: "L500", duration: "2:23", audio: "2021-11-27 Hello L500", album: "Hello XYZ", position: 2 },
+              { date: "Nov 26th, 2021", author: "Austin Ginder", title: "A1", duration: "2:37", audio: "2021-11-26 Hello A1", album: "Hello XYZ", position: 5 },
+              { date: "Oct 21st, 2021", author: "Austin Ginder", title: "World", duration: "3:06", audio: "2021-10-21 Hello World", album: "Hello XYZ", position: 1 },
           ],
           albums: [
               { date: "Future 2022", author: "Austin Ginder", title: "Hello XYZ" }
@@ -213,6 +216,9 @@
       },
       mounted() {
         this.albums.forEach( a => a.position = "" )
+        if ( window.location.host.endsWith( ".localhost" ) ) {
+          this.share_url = this.local_share_url
+        }
         window.addEventListener('keydown', (e) => {
           if (e.key == 32 || e.key == ' ') {
             this.sound.playing() ? this.sound.pause() : this.sound.play()
@@ -321,7 +327,7 @@
             this.selected_item_index = ""
           }
           this.sound = new Howl({
-            src: [ `audio/${this.selected_item.audio}.webm`, `audio/${this.selected_item.audio}.mp3` ],
+            src: [ `${this.share_url}/${this.selected_item.audio}.webm`, `${this.share_url}/${this.selected_item.audio}.mp3` ],
             onmute: function() { self.toggleMute() },
             onplay: function() { 
               self.togglePlay()

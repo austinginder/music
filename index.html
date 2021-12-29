@@ -224,6 +224,7 @@
         window.addEventListener('keydown', (e) => {
           if (e.key == 32 || e.key == ' ') {
             this.sound.playing() ? this.sound.pause() : this.sound.play()
+            e.preventDefault()
           }
         })
       },

@@ -658,27 +658,77 @@
           return num;
         },
         playAudio() {
-          self = this
-          Howler.unload()
-          if ( this.selected_item.album == "" || ! this.selected_item.album ) {
-            this.albums.forEach( a => a.position = "" )
+          Howler.unload();
+
+          // Check if the newly selected item is a single track
+          if (this.selected_item.album == "" || !this.selected_item.album) {
+            // It's a single track, so deselect any active track in all albums
+            this.albums.forEach(a => a.position = null);
           } else {
-            this.selected_item_index = ""
+            // It's an album track. Deselect any active single track.
+            this.selected_item_index = null;
+            // Deselect active tracks in OTHER albums.
+            this.albums.forEach(a => {
+              if (a.title !== this.selected_item.album) {
+                a.position = null;
+              }
+            });
+          }
+
+          // Ensure selected_item and audio path exist
+          if (!this.selected_item || !this.selected_item.audio) {
+            console.error("Selected item or audio path is missing.");
+            this.loaded = false;
+            this.playing = false;
+            return;
           }
           this.sound = new Howl({
-            src: [ `${this.share_url}/${this.selected_item.audio}.webm`, `${this.share_url}/${this.selected_item.audio}.mp3` ],
-            onmute: function() { self.toggleMute() },
-            onplay: function() { 
-              self.togglePlay()
-              requestAnimationFrame(self.step)
+            src: [
+              `${this.share_url}/${this.selected_item.audio}.webm`,
+              `${this.share_url}/${this.selected_item.audio}.mp3`,
+            ],
+            volume: this.playerVolume, // Set initial volume
+            // Use arrow functions to retain 'this' context
+            onmute: () => {
+              this.toggleMute();
             },
-            onpause: function() { self.togglePlay() },
-            onstop: function() { self.togglePlay() },
-            onend: function() { self.playNext() },
-          })
-          this.sound.once('load', function(){
-            self.duration = self.sound.duration()
-          });
+            onplay: () => {
+              this.togglePlay();
+              requestAnimationFrame(this.step); // Start progress update
+            },
+            onpause: () => {
+              this.togglePlay();
+            },
+            onstop: () => {
+              // Reset state on stop
+              this.playing = false;
+              this.paused = false;
+              this.percentage = 0;
+              this.duration = 0;
+              // Optionally deselect item visually?
+              // this.selected_item_index = null;
+              // this.albums.forEach(a => a.position = null);
+            },
+            onend: () => {
+              this.playNext(); // Autoplay next track if enabled
+            },
+            onload: () => {
+              this.duration = this.sound.duration();
+              this.loaded = true; // Mark as loaded only after Howler confirms
+            },
+            onloaderror: (id, err) => {
+              console.error("Error loading audio:", err, this.selected_item.audio);
+              this.loaded = false;
+              this.playing = false;
+              // Handle error display to user if needed
+            },
+            onplayerror: (id, err) => {
+              console.error("Error playing audio:", err, this.selected_item.audio);
+              this.loaded = false;
+              this.playing = false;
+              // Handle error display to user if needed
+            },
+            });
           this.sound.play()
           this.playing = true
           this.loaded = true
@@ -742,13 +792,18 @@
           this.playAudio()
         },
         step() {
-          var seek = this.sound.seek() || 0
-          this.percentage = seek / this.duration * 100
-          if (this.sound.playing()) {
-            setTimeout(function() {
-              requestAnimationFrame(self.step)
-              }, 100)
+          const update = () => {
+          if (this.sound && this.sound.playing()) {
+            const seek = this.sound.seek() || 0;
+            // Prevent division by zero if duration isn't loaded yet
+            this.percentage = this.duration ? (seek / this.duration) * 100 : 0;
+
+            // Continue stepping
+            requestAnimationFrame(update);
           }
+          // If not playing, the loop stops automatically
+          };
+          requestAnimationFrame(update);
         }
       },
     })

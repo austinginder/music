@@ -40,7 +40,7 @@
             </v-tooltip>
         </v-toolbar>
         <v-card flat class="text-center mt-4">
-            <v-icon size="20" class="mb-1">mdi-folder-music-outline</v-icon> {{ tracks.length }} tracks <v-icon size="20" class="ml-4 mb-1">mdi-album</v-icon> {{ albums.length }} albums <v-icon size="20" class="ml-4 mb-1">mdi-clock-outline</v-icon> {{ totalTime }} duration 
+            <v-icon size="20" class="mb-1">mdi-folder-music-outline</v-icon> {{ tracks.length }} tracks <v-icon size="20" class="ml-4 mb-1">mdi-album</v-icon> {{ albums.length }} albums <v-icon size="20" class="ml-4 mb-1">mdi-clock-outline</v-icon> {{ totalTime }} duration
         </v-card>
         <v-container>
             <v-row v-show="singleTracks.length > 0">
@@ -48,11 +48,11 @@
                 <v-list class="elevation-2" max-width="800px" style="margin:auto;">
                   <v-list-item-group v-model="selected_item_index" color="primary">
                     <v-list-item
-                      v-for="item in singleTracks"
+                      v-for="(item, index) in singleTracks"
                       :key="item.title"
                       target="_blank"
                       :href=`${share_url}/${item.audio}.webm`
-                      @click.prevent="selected_item = item; playAudio()"
+                      @click.prevent="selected_item = item; selected_item_index = index; playAudio()"
                     >
                       <v-list-item-avatar>
                           <v-icon large>mdi-play-box</v-icon>
@@ -71,9 +71,14 @@
               </v-col>
             </v-row>
             <v-row>
-              <v-col cols="12" md="4" v-for="album in albums">
-                <v-card  max-width="400px" style="margin:auto;">
-                <img :src=`images/${album.title}.webp` style="max-width:100%;" v-if="album.artwork != false">
+              <v-col cols="12" md="4" v-for="(album, albumIndex) in albums">
+                <v-card max-width="420px" style="margin:auto;">
+                  <div
+                    v-if="album.artwork != false"
+                    @click="playFirstTrackOfAlbum(album)"
+                    style="cursor: pointer; max-width:100%; display: inline-block;" > <!-- Added display style -->
+                    <img :src=`images/${album.title}.webp` style="max-width:100%; display: block;"> <!-- Added display block to img -->
+                  </div>
                   <v-list dense>
                     <v-list-item>
                       <v-list-item-content>
@@ -101,11 +106,11 @@
                   <v-list>
                     <v-list-item-group v-model="album.position" color="primary">
                       <v-list-item
-                        v-for="item in albumTracks( album )"
+                        v-for="(item, index) in albumTracks( album )"
                         :key="item.title"
                         target="_blank"
                         :href=`${share_url}/${item.audio}.webm`
-                        @click.prevent="selected_item = item; playAudio()"
+                        @click.prevent="selected_item = item; albums[albumIndex].position = index; playAudio()"
                       >
                         <v-list-item-avatar>
                             <v-icon large>mdi-play-box</v-icon>
@@ -130,7 +135,10 @@
       </v-main>
       <v-footer fixed padless app>
         <v-card width="100%" color="grey lighten-4">
-          <v-card-text style="max-width:400px;margin:auto" class="text-center pa-2">
+          <v-card-text style="max-width:420px;margin:auto" class="text-center pa-2">
+              <v-btn icon class="ma-2" @click.native="playPrevious()" :disabled="!loaded">
+                  <v-icon large>mdi-skip-previous</v-icon>
+              </v-btn>
               <v-btn icon class="ma-2" @click.native="sound.playing() ? sound.pause() : sound.play()" :disabled="!loaded">
                   <v-icon large v-if="!playing || paused">mdi-play-circle</v-icon>
                   <v-icon large v-else>mdi-pause-circle</v-icon>
@@ -138,30 +146,25 @@
               <v-btn icon class="ma-2" @click.native="sound.stop()" :disabled="!loaded">
                   <v-icon large>mdi-stop-circle</v-icon>
               </v-btn>
+              <v-btn icon class="ma-2" @click.native="playNext()" :disabled="!loaded">
+                  <v-icon large>mdi-skip-next</v-icon>
+              </v-btn>
               <v-btn icon class="ma-2" @click.native="sound.mute( true )" :disabled="!loaded" v-if="! isMuted">
                   <v-icon large>mdi-volume-high</v-icon>
               </v-btn>
               <v-btn icon class="ma-2" @click.native="sound.mute( false )" :disabled="!loaded" v-else>
                 <v-icon large>mdi-volume-off</v-icon>
               </v-btn>
-              <v-btn icon class="ma-2" v-if="loaded" :href=`${share_url}/${selected_item.audio}.mp3` target="_blank">
+              <v-btn icon class="ma-2" :disabled="! loaded" :href=`${share_url}/${selected_item.audio}.mp3` target="_blank">
                   <v-icon large>mdi-download-circle</v-icon>
               </v-btn>
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon class="ma-2" v-show="autoplay" @click="autoplay = false" v-bind="attrs" v-on="on">
-                    <v-icon large>mdi-repeat</v-icon>
+                  <v-btn icon class="ma-2" @click="autoplay = !autoplay" v-bind="attrs" v-on="on">
+                    <v-icon large>{{ autoplay ? 'mdi-repeat' : 'mdi-repeat-off' }}</v-icon>
                   </v-btn>
                 </template>
-                <span>Repeat</span>
-              </v-tooltip>
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon class="ma-2" v-show="! autoplay"  @click="autoplay = true" v-bind="attrs" v-on="on">
-                    <v-icon large>mdi-repeat-off</v-icon>
-                  </v-btn>
-                </template>
-                <span>Repeat</span>
+                <span>Repeat {{ autoplay ? 'On' : 'Off' }}</span>
               </v-tooltip>
               <v-slider v-model="playerVolume" prepend-icon="mdi-volume-high" max="1" step="0.01" min="0" v-show="!playerVolume"></v-slider>
               <v-progress-linear hide-details stream v-model="percentage" height="20" @change="sound.seek( duration * ( percentage / 100 ) )" :disabled="!loaded">
@@ -181,366 +184,12 @@
       el: '#app',
       vuetify: new Vuetify(),
       data: {
-          local_share_url: "/music",
-          share_url: "https://f001.backblazeb2.com/file/Ginder/Music",
-          tracks: [
-              { date: "October 3rd, 2024", author: "Austin Ginder", title: "2024-10-03", duration: "2:50", audio: "Unsorted/2024-10-03", album: "Desert Adventures", position: 1 },
-              { date: "October 22nd, 2024", author: "Austin Ginder", title: "2024-10-22", duration: "3:15", audio: "Unsorted/2024-10-22", album: "Desert Adventures", position: 2 },
-              { date: "November 8th, 2024", author: "Austin Ginder", title: "2024-11-08", duration: "2:22", audio: "Unsorted/2024-11-08", album: "Desert Adventures", position: 3 },
-              { date: "November 11th, 2024", author: "Austin Ginder", title: "2024-11-11B", duration: "2:10", audio: "Unsorted/2024-11-11B", album: "Desert Adventures", position: 4 },
-              { date: "November 29th, 2024", author: "Austin Ginder", title: "2024-11-29", duration: "2:35", audio: "Unsorted/2024-11-29", album: "Desert Adventures", position: 5 },
-              { date: "December 2nd, 2024", author: "Austin Ginder", title: "2024-12-02", duration: "1:59", audio: "Unsorted/2024-12-02", album: "Desert Adventures", position: 6 },
-              { date: "December 2nd, 2024", author: "Austin Ginder", title: "2024-12-02B", duration: "2:36", audio: "Unsorted/2024-12-02B", album: "Desert Adventures", position: 7 },
-              { date: "March 9th, 2025", author: "Austin Ginder", title: "2025-03-09", duration: "2:54", audio: "Unsorted/2025-03-09", album: "Desert Adventures", position: 8 },
-              { date: "March 29th, 2025", author: "Austin Ginder", title: "2025-03-29", duration: "1:51", audio: "Desert Adventures/2025-03-29", album: "Desert Adventures", position: 9 },
-              { date: "April 13th, 2025", author: "Austin Ginder", title: "2025-04-13", duration: "2:45", audio: "Desert Adventures/2025-04-13", album: "Desert Adventures", position: 10 },
-              { date: "April 18th, 2025", author: "Austin Ginder", title: "2025-04-18", duration: "2:55", audio: "Desert Adventures/2025-04-18", album: "Desert Adventures", position: 11 },
-              { date: "March 3rd, 2024", author: "Austin Ginder", title: "Ore Deposits", duration: "2:36", audio: "Lands of Hidden Gems/2024-03-17", album: "Lands of Hidden Gems", position: 1 },
-              { date: "May 24th, 2024", author: "Austin Ginder", title: "Extracting Metals", duration: "2:36", audio: "Lands of Hidden Gems/2024-05-24B", album: "Lands of Hidden Gems", position: 2 },
-              { date: "May 25th, 2024", author: "Austin Ginder", title: "Black Diamond", duration: "2:37", audio: "Lands of Hidden Gems/2024-05-25", album: "Lands of Hidden Gems", position: 3 },
-              { date: "June 4th, 2024", author: "Austin Ginder", title: "Emerald", duration: "2:14", audio: "Lands of Hidden Gems/2024-06-04", album: "Lands of Hidden Gems", position: 4 },
-              { date: "June 15th, 2024", author: "Austin Ginder", title: "Desert Diamond", duration: "3:38", audio: "Lands of Hidden Gems/2024-06-15", album: "Lands of Hidden Gems", position: 5 },
-              { date: "July 3rd, 2024", author: "Austin Ginder", title: "Obsidian", duration: "2:52", audio: "Lands of Hidden Gems/2024-07-03", album: "Lands of Hidden Gems", position: 6 },
-              { date: "July 8th, 2024", author: "Austin Ginder", title: "Jade", duration: "3:15", audio: "Lands of Hidden Gems/2024-07-08", album: "Lands of Hidden Gems", position: 7 },
-              { date: "July 9th, 2024", author: "Austin Ginder", title: "Sapphire", duration: "2:32", audio: "Lands of Hidden Gems/2024-07-09", album: "Lands of Hidden Gems", position: 8 },
-              { date: "July 21st, 2024", author: "Austin Ginder", title: "Agate", duration: "2:41", audio: "Lands of Hidden Gems/2024-07-21", album: "Lands of Hidden Gems", position: 9 },
-              { date: "July 2nd, 2024", author: "Austin Ginder", title: "Pearl", duration: "2:35", audio: "Lands of Hidden Gems/2024-07-22", album: "Lands of Hidden Gems", position: 10 },
-              { date: "July 27th, 2024", author: "Austin Ginder", title: "Ruby", duration: "3:52", audio: "Lands of Hidden Gems/2024-07-27", album: "Lands of Hidden Gems", position: 11 },
-              { date: "July 30th, 2024", author: "Austin Ginder", title: "Topaz", duration: "2:55", audio: "Lands of Hidden Gems/2024-07-30", album: "Lands of Hidden Gems", position: 12 },
-              { date: "November 25th, 2023", author: "Austin Ginder", title: "Living Dragons", duration: "2:17", audio: "Planet Drase/2023-11-25", album: "Planet Drase", position: 1 },
-              { date: "December 5th, 2023", author: "Austin Ginder", title: "Small Creatures", duration: "2:46", audio: "Planet Drase/2023-12-05", album: "Planet Drase", position: 2 },
-              { date: "December 10th, 2023", author: "Austin Ginder", title: "Winged Dragon", duration: "2:43", audio: "Planet Drase/2023-12-10", album: "Planet Drase", position: 3 },
-              { date: "December 12th, 2023", author: "Austin Ginder", title: "Fire and Ice", duration: "2:37", audio: "Planet Drase/2023-12-12", album: "Planet Drase", position: 4 },
-              { date: "December 12th, 2023", author: "Austin Ginder", title: "Large Beasts", duration: "2:54", audio: "Planet Drase/2023-12-12B", album: "Planet Drase", position: 5 },
-              { date: "December 19th, 2023", author: "Austin Ginder", title: "Tempist Dragon", duration: "3:22", audio: "Planet Drase/2023-12-19", album: "Planet Drase", position: 6 },
-              { date: "December 21st, 2023", author: "Austin Ginder", title: "Terrifying Creature", duration: "2:30", audio: "Planet Drase/2023-12-21", album: "Planet Drase", position: 7 },
-              { date: "December 25th, 2023", author: "Austin Ginder", title: "Swamp Dragon", duration: "2:38", audio: "Planet Drase/2023-12-25", album: "Planet Drase", position: 8 },
-              { date: "December 29th, 2023", author: "Austin Ginder", title: "Rock Dragon", duration: "2:45", audio: "Planet Drase/2023-12-29", album: "Planet Drase", position: 9 },
-              { date: "December 29th, 2023", author: "Austin Ginder", title: "Mountain Dragon", duration: "2:59", audio: "Planet Drase/2023-12-29B", album: "Planet Drase", position: 10 },
-              { date: "January 2nd, 2024", author: "Austin Ginder", title: "Land of the Mighty", duration: "3:51", audio: "Planet Drase/2024-01-02", album: "Planet Drase", position: 11 },
-              { date: "August 29th, 2023", author: "Austin Ginder", title: "Sand Explorer", duration: "2:39", audio: "Desert Life/2023-08-29", album: "Desert Life", position: 1 },
-              { date: "September 5th, 2023", author: "Austin Ginder", title: "Sand Lizards", duration: "2:28", audio: "Desert Life/2023-09-05", album: "Desert Life", position: 2 },
-              { date: "September 12th, 2023", author: "Austin Ginder", title: "Windstorm", duration: "2:50", audio: "Desert Life/2023-09-12", album: "Desert Life", position: 3 },
-              { date: "September 14th, 2023", author: "Austin Ginder", title: "Desert Growth", duration: "2:17", audio: "Desert Life/2023-09-14", album: "Desert Life", position: 4 },
-              { date: "September 24th, 2023", author: "Austin Ginder", title: "Hundreds of Miles", duration: "2:31", audio: "Desert Life/2023-09-24", album: "Desert Life", position: 5 },
-              { date: "September 29th, 2023", author: "Austin Ginder", title: "Dry Wind", duration: "3:07", audio: "Desert Life/2023-09-29", album: "Desert Life", position: 6 },
-              { date: "September 30th, 2023", author: "Austin Ginder", title: "Fennec Fox", duration: "2:17", audio: "Desert Life/2023-09-30", album: "Desert Life", position: 7 },
-              { date: "October 5th, 2023", author: "Austin Ginder", title: "Meerkat", duration: "2:55", audio: "Desert Life/2023-10-05", album: "Desert Life", position: 8 },
-              { date: "October 18th, 2023", author: "Austin Ginder", title: "Tumbleweeds", duration: "2:02", audio: "Desert Life/2023-10-18", album: "Desert Life", position: 9 },
-              { date: "October 24th, 2023", author: "Austin Ginder", title: "A Desert Cactus", duration: "2:39", audio: "Desert Life/2023-10-24", album: "Desert Life", position: 10 },
-              { date: "January 6th, 2024", author: "Austin Ginder", title: "A Desert Night", duration: "3:25", audio: "Desert Life/2024-01-06", album: "Desert Life", position: 11 },
-              { date: "January 16th, 2024", author: "Austin Ginder", title: "Desert Bats", duration: "2:22", audio: "Desert Life/2024-01-16", album: "Desert Life", position: 12 },
-              { date: "May 6th, 2023", author: "Austin Ginder", title: "The Adventures Of The Mantis Shrimp", duration: "2:07", audio: "Ocean Life/2023-05-06 The Adventures Of The Mantis Shrimp", album: "Ocean Life", position: 1 },
-              { date: "May 23rd, 2023", author: "Austin Ginder", title: "Deep Sea Swimming", duration: "3:07", audio: "Ocean Life/2023-05-23", album: "Ocean Life", position: 2 },
-              { date: "June 1st, 2023", author: "Austin Ginder", title: "Ocean Life", duration: "6:12", audio: "Ocean Life/2023-06-01", album: "Ocean Life", position: 3 },
-              { date: "July 22nd, 2023", author: "Austin Ginder", title: "Angler Fish", duration: "2:09", audio: "Ocean Life/2023-07-22", album: "Ocean Life", position: 4 },
-              { date: "July 29th, 2023", author: "Austin Ginder", title: "Crustaceans", duration: "2:20", audio: "Ocean Life/2023-07-29", album: "Ocean Life", position: 5 },
-              { date: "August 2nd, 2023", author: "Austin Ginder", title: "Tiny Seahorse", duration: "3:11", audio: "Ocean Life/2023-08-02", album: "Ocean Life", position: 6 },
-              { date: "August 3rd, 2023", author: "Austin Ginder", title: "A Shark's Life", duration: "3:07", audio: "Ocean Life/2023-08-03", album: "Ocean Life", position: 7 },
-              { date: "August 8th, 2023", author: "Austin Ginder", title: "Octopus Lair", duration: "2:52", audio: "Ocean Life/2023-08-07", album: "Ocean Life", position: 8 },
-              { date: "June 13th, 2023", author: "Austin Ginder", title: "Ocean Migrations", duration: "2:08", audio: "Ocean Life/2023-06-13", album: "Ocean Life", position: 9 },
-              { date: "August 14th, 2023", author: "Austin Ginder", title: "Fangtooth", duration: "2:42", audio: "Ocean Life/2023-08-14", album: "Ocean Life", position: 10 },
-              { date: "January 19th, 2024", author: "Austin Ginder", title: "Ocean Jellies", duration: "2:42", audio: "Ocean Life/2024-01-19", album: "Ocean Life", position: 11 },
-              { date: "June 12th, 2023", author: "Austin Ginder", title: "Earthen Monsters", duration: "2:51", audio: "Volcano Mountain/2023-06-12", album: "Volcano Mountain", position: 1 },
-              { date: "June 21st, 2023", author: "Austin Ginder", title: "Layers Building", duration: "1:58", audio: "Volcano Mountain/2023-06-21", album: "Volcano Mountain", position: 2 },
-              { date: "May 10th, 2023", author: "Austin Ginder", title: "Molten Powerhouse", duration: "3:53", audio: "Volcano Mountain/2023-05-10", album: "Volcano Mountain", position: 3 },
-              { date: "June 25th, 2023", author: "Austin Ginder", title: "Lava Geysers", duration: "2:33", audio: "Volcano Mountain/2023-06-25", album: "Volcano Mountain", position: 4 },
-              { date: "June 25th, 2023", author: "Austin Ginder", title: "Years Past", duration: "2:57", audio: "Volcano Mountain/2023-06-25B", album: "Volcano Mountain", position: 5 },
-              { date: "June 29th, 2023", author: "Austin Ginder", title: "Core Giants", duration: "2:16", audio: "Volcano Mountain/2023-06-29", album: "Volcano Mountain", position: 6 },
-              { date: "July 11th, 2023", author: "Austin Ginder", title: "Magma Rocks", duration: "2:59", audio: "Volcano Mountain/2023-07-11", album: "Volcano Mountain", position: 7 },
-              { date: "July 12th, 2023", author: "Austin Ginder", title: "Mountain Ranges", duration: "2:23", audio: "Volcano Mountain/2023-07-12", album: "Volcano Mountain", position: 8 },
-              { date: "July 12th, 2023", author: "Austin Ginder", title: "Core Pressure", duration: "3:28", audio: "Volcano Mountain/2023-07-12B", album: "Volcano Mountain", position: 9 },
-              { date: "July 13th, 2023", author: "Austin Ginder", title: "Lava Blast", duration: "2:42", audio: "Volcano Mountain/2023-07-13", album: "Volcano Mountain", position: 10 },
-              { date: "July 19th, 2023", author: "Austin Ginder", title: "Unmovable Mountain", duration: "3:23", audio: "Volcano Mountain/2023-07-19", album: "Volcano Mountain", position: 11 },
-              { date: "July 21st, 2023", author: "Austin Ginder", title: "Volcanic Melody", duration: "2:13", audio: "Volcano Mountain/2023-07-21", album: "Volcano Mountain", position: 12 },
-              { date: "April 14th, 2023", author: "Austin Ginder", title: "Night Beacon", duration: "3:25", audio: "Mission Control/2023-04-14", album: "Mission Control", position: 1 },
-              { date: "April 16th, 2023", author: "Austin Ginder", title: "Light Breaks", duration: "3:04", audio: "Mission Control/2023-04-16", album: "Mission Control", position: 2 },
-              { date: "April 17th, 2023", author: "Austin Ginder", title: "Airy Airspace", duration: "2:39", audio: "Mission Control/2023-04-17", album: "Mission Control", position: 3 },
-              { date: "April 21st, 2023", author: "Austin Ginder", title: "Ordered Landings", duration: "2:42", audio: "Mission Control/2023-04-21", album: "Mission Control", position: 4 },
-              { date: "April 23rd, 2023", author: "Austin Ginder", title: "Lights Out", duration: "3:12", audio: "Mission Control/2023-04-23", album: "Mission Control", position: 5 },
-              { date: "April 24th, 2023", author: "Austin Ginder", title: "Orchestrated Skys", duration: "2:54", audio: "Mission Control/2023-04-24", album: "Mission Control", position: 6 },
-              { date: "April 27th, 2023", author: "Austin Ginder", title: "Daily View", duration: "3:09", audio: "Mission Control/2023-04-27", album: "Mission Control", position: 7 },
-              { date: "April 28th, 2023", author: "Austin Ginder", title: "Distance Traveled", duration: "3:58", audio: "Mission Control/2023-04-28", album: "Mission Control", position: 8 },
-              { date: "April 29th, 2023", author: "Austin Ginder", title: "Destinations", duration: "2:38", audio: "Mission Control/2023-04-29", album: "Mission Control", position: 9 },
-              { date: "May 5th, 2023", author: "Austin Ginder", title: "Watchful Lights", duration: "3:30", audio: "Mission Control/2023-05-05", album: "Mission Control", position: 10 },
-              { date: "March 12th, 2023", author: "Austin Ginder", title: "Empty Expanse", duration: "2:08", audio: "Command Outpost/2023-03-12", album: "Command Outpost", position: 1 },
-              { date: "March 14th, 2023", author: "Austin Ginder", title: "Radar Mapping", duration: "3:07", audio: "Command Outpost/2023-03-14", album: "Command Outpost", position: 2 },
-              { date: "March 16th, 2023", author: "Austin Ginder", title: "Observation Lab", duration: "2:48", audio: "Command Outpost/2023-03-16", album: "Command Outpost", position: 3 },
-              { date: "March 18th, 2023", author: "Austin Ginder", title: "Winter Days", duration: "2:34", audio: "Command Outpost/2023-03-18", album: "Command Outpost", position: 4 },
-              { date: "March 19th, 2023", author: "Austin Ginder", title: "Long Winter Nights", duration: "2:04", audio: "Command Outpost/2023-03-19", album: "Command Outpost", position: 5 },
-              { date: "March 20th, 2023", author: "Austin Ginder", title: "Theoretical Discovery", duration: "3:12", audio: "Command Outpost/2023-03-20", album: "Command Outpost", position: 6 },
-              { date: "March 25th, 2023", author: "Austin Ginder", title: "Rotating Observations", duration: "3:07", audio: "Command Outpost/2023-03-25", album: "Command Outpost", position: 7 },
-              { date: "March 26th, 2023", author: "Austin Ginder", title: "Remote Lab", duration: "2:34", audio: "Command Outpost/2023-03-26", album: "Command Outpost", position: 8 },
-              { date: "April 1st, 2023", author: "Austin Ginder", title: "Upstream Connection", duration: "3:14", audio: "Command Outpost/2023-04-01", album: "Command Outpost", position: 9 },
-              { date: "April 3rd, 2023", author: "Austin Ginder", title: "Background Ping", duration: "2:02", audio: "Command Outpost/2023-04-03", album: "Command Outpost", position: 10 },
-              { date: "April 11th, 2023", author: "Austin Ginder", title: "Ice Exploration", duration: "2:37", audio: "Command Outpost/2023-04-11", album: "Command Outpost", position: 11 },
-              { date: "April 11th, 2023", author: "Austin Ginder", title: "Final Transmission", duration: "3:25", audio: "Command Outpost/2023-04-11B", album: "Command Outpost", position: 12 },
-              { date: "Feb 13th, 2023", author: "Austin Ginder", title: "Out Of The Den", duration: "2:59", audio: "Captain Fox/Out Of The Den", album: "Captain Fox", position: 1 },
-              { date: "Feb 15th, 2023", author: "Austin Ginder", title: "Perimeter Limiter ", duration: "3:04", audio: "Captain Fox/2023-02-15", album: "Captain Fox", position: 2 },
-              { date: "Feb 17th, 2023", author: "Austin Ginder", title: "Lost In The Hunt", duration: "3:24", audio: "Captain Fox/2023-02-17", album: "Captain Fox", position: 3 },
-              { date: "Feb 20th, 2023", author: "Austin Ginder", title: "Just A Fox", duration: "3:13", audio: "Captain Fox/2023-02-20", album: "Captain Fox", position: 4 },
-              { date: "March 5th, 2023", author: "Austin Ginder", title: "Captain Fox", duration: "2:41", audio: "Captain Fox/2023-03-05", album: "Captain Fox", position: 5 },
-              { date: "March 6th, 2023", author: "Austin Ginder", title: "Inquisitive Mind", duration: "3:03", audio: "Captain Fox/2023-03-06", album: "Captain Fox", position: 6 },
-              { date: "March 7th, 2023", author: "Austin Ginder", title: "Digital Upgrade", duration: "2:30", audio: "Captain Fox/2023-03-07", album: "Captain Fox", position: 7 },
-              { date: "March 7th, 2023", author: "Austin Ginder", title: "Digital Madness", duration: "1:51", audio: "Captain Fox/2023-03-07B", album: "Captain Fox", position: 8 },
-              { date: "March 9th, 2023", author: "Austin Ginder", title: "Reconnaissance", duration: "2:38", audio: "Captain Fox/2023-03-09", album: "Captain Fox", position: 9 },
-              { date: "March 9th, 2023", author: "Austin Ginder", title: "Expert Sneaking", duration: "3:35", audio: "Captain Fox/2023-03-09B", album: "Captain Fox", position: 10 },
-              { date: "April 5th, 2023", author: "Austin Ginder", title: "Silent Journey", duration: "3:20", audio: "Command Outpost/2023-04-05", album: "Captain Fox", position: 11 },
-              { date: "March 30th, 2023", author: "Austin Ginder", title: "Mission Accomplished", duration: "3:44", audio: "Command Outpost/2023-03-30", album: "Captain Fox", position: 12 },
-              { date: "Jan 29th, 2023", author: "Austin Ginder", title: "Night Signals", duration: "3:19", audio: "Magenta City/01-Night Signals", album: "Magenta City", position: 1 },
-              { date: "Feb 1st, 2023", author: "Austin Ginder", title: "Wonder Wander", duration: "3:52", audio: "Magenta City/02-Wonder Wander", album: "Magenta City", position: 2 },
-              { date: "Feb 2nd, 2023", author: "Austin Ginder", title: "Subway Loops", duration: "2:53", audio: "Magenta City/03-Subway Loops", album: "Magenta City", position: 3 },
-              { date: "Feb 3rd, 2023", author: "Austin Ginder", title: "Midnight Mist", duration: "3:07", audio: "Magenta City/04-Midnight Mist", album: "Magenta City", position: 4 },
-              { date: "Feb 5th, 2023", author: "Austin Ginder", title: "Sunrise Awake", duration: "3:34", audio: "Magenta City/05-Sunrise Awake", album: "Magenta City", position: 5 },
-              { date: "Feb 7th, 2023", author: "Austin Ginder", title: "Building Higher", duration: "2:20", audio: "Magenta City/06-Building Higher", album: "Magenta City", position: 6 },
-              { date: "Feb 8th, 2023", author: "Austin Ginder", title: "Downtown Beat", duration: "3:01", audio: "Magenta City/07-Downtown Beat", album: "Magenta City", position: 7 },
-              { date: "Feb 9th, 2023", author: "Austin Ginder", title: "City Limits", duration: "4:17", audio: "Magenta City/08-City Limits", album: "Magenta City", position: 8 },
-              { date: "Feb 10th, 2023", author: "Austin Ginder", title: "Magenta City", duration: "4:49", audio: "Magenta City/09-Magenta City", album: "Magenta City", position: 9 },
-              { date: "April 7th, 2023", author: "Austin Ginder", title: "Daily Flow", duration: "2:40", audio: "Magenta City/10-Daily Flow", album: "Magenta City", position: 10 },
-              { date: "Jan 6th, 2023", author: "Austin Ginder", title: "Robot Mandate", duration: "2:32", audio: "Robot Warriors/01-Robot Mandate", album: "Robot Warriors", position: 1 },
-              { date: "Jan 5th, 2023", author: "Austin Ginder", title: "Protect And Serve", duration: "2:57", audio: "Robot Warriors/02-Protect And Serve", album: "Robot Warriors", position: 2 },
-              { date: "Jan 8th, 2023", author: "Austin Ginder", title: "Convoy Rollout", duration: "2:14", audio: "Robot Warriors/03-Convoy Rollout", album: "Robot Warriors", position: 3 },
-              { date: "Jan 8th, 2023", author: "Austin Ginder", title: "Battle Lights", duration: "2:30", audio: "Robot Warriors/04-Battle Lights", album: "Robot Warriors", position: 4 },
-              { date: "Jan 9th, 2023", author: "Austin Ginder", title: "Sky Encounters", duration: "2:26", audio: "Robot Warriors/05-Sky Encounters", album: "Robot Warriors", position: 5 },
-              { date: "Jan 10th, 2023", author: "Austin Ginder", title: "Night Protection", duration: "4:22", audio: "Robot Warriors/06-Night Protection", album: "Robot Warriors", position: 6 },
-              { date: "Jan 16th, 2023", author: "Austin Ginder", title: "Territory Takeback", duration: "2:28", audio: "Robot Warriors/07-Territory Takeback", album: "Robot Warriors", position: 7 },
-              { date: "Jan 19th, 2023", author: "Austin Ginder", title: "Never Surrender", duration: "3:13", audio: "Robot Warriors/08-Never Surrender", album: "Robot Warriors", position: 8 },
-              { date: "Jan 22nd, 2023", author: "Austin Ginder", title: "Fighting Victoriously", duration: "3:02", audio: "Robot Warriors/09-Fighting Victoriously", album: "Robot Warriors", position: 9 },
-              { date: "Jan 22nd, 2023", author: "Austin Ginder", title: "Robot Champions", duration: "2:53", audio: "Robot Warriors/10-Robot Champions", album: "Robot Warriors", position: 10 },
-              { date: "Dec 14th, 2022", author: "Austin Ginder", title: "Cavern Plans", duration: "3:16", audio: "Underground Caverns/01-Cavern Plans", album: "Underground Caverns", position: 1 },
-              { date: "Dec 18th, 2022", author: "Austin Ginder", title: "Tunnel Formations", duration: "2:57", audio: "Underground Caverns/02-Tunnel Formations", album: "Underground Caverns", position: 2 },
-              { date: "Dec 19th, 2022", author: "Austin Ginder", title: "Diamond Mining", duration: "3:19", audio: "Underground Caverns/03-Diamond Mining", album: "Underground Caverns", position: 3 },
-              { date: "Dec 24th, 2022", author: "Austin Ginder", title: "Blasting Deeper", duration: "3:12", audio: "Underground Caverns/04-Blasting Deeper", album: "Underground Caverns", position: 4 },
-              { date: "Dec 24th, 2022", author: "Austin Ginder", title: "Network Of Tunnels", duration: "2:58", audio: "Underground Caverns/05-Network Of Tunnels", album: "Underground Caverns", position: 5 },
-              { date: "Dec 26th, 2022", author: "Austin Ginder", title: "Cave Explorer", duration: "3:09", audio: "Underground Caverns/06-Cave Explorer", album: "Underground Caverns", position: 6 },
-              { date: "Dec 28th, 2022", author: "Austin Ginder", title: "Stalactites", duration: "2:36", audio: "Underground Caverns/07-Stalactites", album: "Underground Caverns", position: 7 },
-              { date: "Jan 3rd, 2023", author: "Austin Ginder", title: "Stalagmites", duration: "1:52", audio: "Underground Caverns/08-Stalagmites", album: "Underground Caverns", position: 8 },
-              { date: "Dec 29th, 2022", author: "Austin Ginder", title: "Emerald Hunting", duration: "2:34", audio: "Underground Caverns/09-Emerald Hunting", album: "Underground Caverns", position: 9 },
-              { date: "Jan 4th, 2023", author: "Austin Ginder", title: "Ruby Discovered", duration: "3:13", audio: "Underground Caverns/10-Ruby Discovered", album: "Underground Caverns", position: 10 },
-              { date: "Jan 21st, 2023", author: "Austin Ginder", title: "Alien Lands", duration: "2:46", audio: "Underground Caverns/11-Alien Lands", album: "Underground Caverns", position: 11 },
-              { date: "Nov 11th, 2022", author: "Austin Ginder", title: "Velociraptor", duration: "3:24", audio: "Prehistoric Creatures/01-Velociraptor", album: "Prehistoric Creatures", position: 1 },
-              { date: "Dec 3rd, 2022", author: "Austin Ginder", title: "Stegosaurus", duration: "3:11", audio: "Prehistoric Creatures/02-Stegosaurus", album: "Prehistoric Creatures", position: 2 },
-              { date: "Dec 4th, 2022", author: "Austin Ginder", title: "Brontosaurus", duration: "3:03", audio: "Prehistoric Creatures/03-Brontosaurus", album: "Prehistoric Creatures", position: 3 },
-              { date: "Dec 4th, 2022", author: "Austin Ginder", title: "Megalodon", duration: "3:18", audio: "Prehistoric Creatures/04-Megalodon", album: "Prehistoric Creatures", position: 4 },
-              { date: "Dec 6th, 2022", author: "Austin Ginder", title: "Sabertooth Tiger", duration: "3:21", audio: "Prehistoric Creatures/05-Sabertooth Tiger", album: "Prehistoric Creatures", position: 5 },
-              { date: "Dec 7th, 2022", author: "Austin Ginder", title: "Pterodactyl", duration: "3:16", audio: "Prehistoric Creatures/06-Pterodactyl", album: "Prehistoric Creatures", position: 6 },
-              { date: "Dec 10th, 2022", author: "Austin Ginder", title: "Triceratops", duration: "3:12", audio: "Prehistoric Creatures/07-Triceratops", album: "Prehistoric Creatures", position: 7 },
-              { date: "Dec 11th, 2022", author: "Austin Ginder", title: "Tyrannosaurus Rex", duration: "3:24", audio: "Prehistoric Creatures/08-Tyrannosaurus Rex", album: "Prehistoric Creatures", position: 8 },
-              { date: "Dec 12th, 2022", author: "Austin Ginder", title: "Woolly Mammoth", duration: "2:47", audio: "Prehistoric Creatures/09-Woolly Mammoth", album: "Prehistoric Creatures", position: 9 },
-              { date: "Dec 13th, 2022", author: "Austin Ginder", title: "Prehistoric Outro", duration: "3:25", audio: "Prehistoric Creatures/10-Prehistoric Outro", album: "Prehistoric Creatures", position: 10 },
-              { date: "Nov 11th, 2022", author: "Austin Ginder", title: "Universe Waiting", duration: "3:43", audio: "Unknown SpaceTime/01-Universe Waiting", album: "Unknown Space-Time", position: 1 },
-              { date: "Nov 11th, 2022", author: "Austin Ginder", title: "Dimensional Embark", duration: "3:22", audio: "Unknown SpaceTime/02-Dimensional Embark", album: "Unknown Space-Time", position: 2 },
-              { date: "Nov 15th, 2022", author: "Austin Ginder", title: "Bending Time", duration: "3:22", audio: "Unknown SpaceTime/03-Bending Time", album: "Unknown Space-Time", position: 3 },
-              { date: "Nov 16th, 2022", author: "Austin Ginder", title: "Chaotic Unraveling", duration: "3:42", audio: "Unknown SpaceTime/04-Chaotic Unraveling", album: "Unknown Space-Time", position: 4 },
-              { date: "Nov 16th, 2022", author: "Austin Ginder", title: "Beautiful Woven Folds", duration: "4:17", audio: "Unknown SpaceTime/05-Beautiful Woven Folds", album: "Unknown Space-Time", position: 5 },
-              { date: "Nov 18th, 2022", author: "Austin Ginder", title: "In All Directions", duration: "3:52", audio: "Unknown SpaceTime/06-In All Directions", album: "Unknown Space-Time", position: 6 },
-              { date: "Nov 19th, 2022", author: "Austin Ginder", title: "Forced Layers", duration: "3:09", audio: "Unknown SpaceTime/07-Forced Layers", album: "Unknown Space-Time", position: 7 },
-              { date: "Nov 21st, 2022", author: "Austin Ginder", title: "A Galaxy Is Born", duration: "4:37", audio: "Unknown SpaceTime/08-A Galaxy Is Born", album: "Unknown Space-Time", position: 8 },
-              { date: "Nov 24th, 2022", author: "Austin Ginder", title: "Into The Sun", duration: "3:16", audio: "Unknown SpaceTime/09-Into The Sun", album: "Unknown Space-Time", position: 9 },
-              { date: "Oct 19th, 2022", author: "Austin Ginder", title: "Breakthrough Light", duration: "2:44", audio: "Carried By The Light/01-Breakthrough Light", album: "Carried By The Light", position: 1 },
-              { date: "Oct 23rd, 2022", author: "Austin Ginder", title: "Multicolored", duration: "3:01", audio: "Carried By The Light/02-Multicolored", album: "Carried By The Light", position: 2 },
-              { date: "Oct 24th, 2022", author: "Austin Ginder", title: "Diffused", duration: "3:01", audio: "Carried By The Light/03-Diffused", album: "Carried By The Light", position: 3 },
-              { date: "Oct 25th, 2022", author: "Austin Ginder", title: "Little Star", duration: "2:53", audio: "Carried By The Light/04-Little Star", album: "Carried By The Light", position: 4 },
-              { date: "Oct 26th, 2022", author: "Austin Ginder", title: "Solar Engine", duration: "2:34", audio: "Carried By The Light/05-Solar Engine", album: "Carried By The Light", position: 5 },
-              { date: "Oct 28th, 2022", author: "Austin Ginder", title: "Weightless", duration: "3:01", audio: "Carried By The Light/06-Weightless", album: "Carried By The Light", position: 6 },
-              { date: "Oct 29th, 2022", author: "Austin Ginder", title: "Brilliant Rays", duration: "3:23", audio: "Carried By The Light/07-Brilliant Rays", album: "Carried By The Light", position: 7 },
-              { date: "Nov 9th, 2022", author: "Austin Ginder", title: "X-Rays", duration: "3:06", audio: "Carried By The Light/08-X-Rays", album: "Carried By The Light", position: 8 },
-              { date: "Nov 9th, 2022", author: "Austin Ginder", title: "Ultraviolet", duration: "3:56", audio: "Carried By The Light/09-Ultraviolet", album: "Carried By The Light", position: 9 },
-              { date: "Nov 10th, 2022", author: "Austin Ginder", title: "Infrared", duration: "4:04", audio: "Carried By The Light/10-Infrared", album: "Carried By The Light", position: 10 },
-              { date: "Oct 1st, 2022", author: "Austin Ginder", title: "Mission Protect", duration: "3:08", audio: "Robot Protectors/01-Mission Protect", album: "Robot Protectors", position: 1 },
-              { date: "Oct 6th, 2022", author: "Austin Ginder", title: "Atmospheric Preparation", duration: "2:56", audio: "Robot Protectors/02-Atmospheric Preparation", album: "Robot Protectors", position: 2 },
-              { date: "Oct 7th, 2022", author: "Austin Ginder", title: "Reporting for Duty", duration: "2:37", audio: "Robot Protectors/03-Reporting for Duty", album: "Robot Protectors", position: 3 },
-              { date: "Oct 8th, 2022", author: "Austin Ginder", title: "Robot Machine", duration: "2:44", audio: "Robot Protectors/04-Robot Machine", album: "Robot Protectors", position: 4 },
-              { date: "Oct 10th, 2022", author: "Austin Ginder", title: "Total Coverage", duration: "3:15", audio: "Robot Protectors/05-Total Coverage", album: "Robot Protectors", position: 5 },
-              { date: "Oct 12th, 2022", author: "Austin Ginder", title: "Listening For The Unknown", duration: "3:04", audio: "Robot Protectors/06-Listening For The Unknown", album: "Robot Protectors", position: 6 },
-              { date: "Oct 14th, 2022", author: "Austin Ginder", title: "Space Scouting", duration: "2:48", audio: "Robot Protectors/07-Space Scouting", album: "Robot Protectors", position: 7 },
-              { date: "Oct 15th, 2022", author: "Austin Ginder", title: "Robot Tunes", duration: "3:06", audio: "Robot Protectors/08-Robot Tunes", album: "Robot Protectors", position: 8 },
-              { date: "Oct 15th, 2022", author: "Austin Ginder", title: "Orbital Defense", duration: "2:20", audio: "Robot Protectors/09-Orbital Defense", album: "Robot Protectors", position: 9 },
-              { date: "Oct 17th, 2022", author: "Austin Ginder", title: "Dangerous Dance", duration: "3:21", audio: "Robot Protectors/10-Dangerous Dance", album: "Robot Protectors", position: 10 },
-              { date: "Nov 8th, 2022", author: "Austin Ginder", title: "Robot Protectors", duration: "3:05", audio: "Robot Protectors/11-Robot Protectors", album: "Robot Protectors", position: 11 },
-              { date: "Aug 28th, 2022", author: "Austin Ginder", title: "Fang The Fox", duration: "2:41", audio: "Tiny Bit Adventures/01-Fang The Fox", album: "Tiny Bit Adventures", position: 1 },
-              { date: "Aug 26th, 2022", author: "Austin Ginder", title: "Collaborative Attacks", duration: "2:58", audio: "Tiny Bit Adventures/02-Collaborative Attacks", album: "Tiny Bit Adventures", position: 2 },
-              { date: "Sept 1st, 2022", author: "Austin Ginder", title: "Dreamspace", duration: "3:06", audio: "Tiny Bit Adventures/03-Dreamspace", album: "Tiny Bit Adventures", position: 3 },
-              { date: "Sept 3rd, 2022", author: "Austin Ginder", title: "Run and Blitz", duration: "3:20", audio: "Tiny Bit Adventures/04-Run and Blitz", album: "Tiny Bit Adventures", position: 4 },
-              { date: "Sept 4th, 2022", author: "Austin Ginder", title: "Avoid The Void", duration: "3:07", audio: "Tiny Bit Adventures/05-Avoid The Void", album: "Tiny Bit Adventures", position: 5 },
-              { date: "Aug 21st, 2022", author: "Austin Ginder", title: "Again, Again, Win", duration: "3:10", audio: "Tiny Bit Adventures/06-Again, Again, Win", album: "Tiny Bit Adventures", position: 6 },
-              { date: "Sept 22nd, 2022", author: "Austin Ginder", title: "Forest Exploration", duration: "2:50", audio: "Tiny Bit Adventures/07-Forest Exploration", album: "Tiny Bit Adventures", position: 7 },
-              { date: "Sept 23rd, 2022", author: "Austin Ginder", title: "Slim Monsters", duration: "3:03", audio: "Tiny Bit Adventures/08-Slim Monsters", album: "Tiny Bit Adventures", position: 8 },
-              { date: "Sept 24th, 2022", author: "Austin Ginder", title: "Plasma Blast", duration: "2:44", audio: "Tiny Bit Adventures/09-Plasma Blast", album: "Tiny Bit Adventures", position: 9 },,
-              { date: "Oct 30th, 2022", author: "Austin Ginder", title: "Forest Home", duration: "3:26", audio: "Tiny Bit Adventures/10-Forest Home", album: "Tiny Bit Adventures", position: 10 },
-              { date: "June 20th, 2022", author: "Austin Ginder", title: "Intergalactic Adventures", duration: "3:03", audio: "Starship v1/01-Intergalactic Adventures", album: "Starship v1", position: 1 },
-              { date: "June 2nd, 2022", author: "Austin Ginder", title: "Hyperspeed Cruising", duration: "3:27", audio: "Starship v1/02-Hyperspeed Cruising", album: "Starship v1", position: 2 },
-              { date: "May 24th, 2022", author: "Austin Ginder", title: "Longing Onward", duration: "2:49", audio: "Starship v1/03-Longing Onward", album: "Starship v1", position: 3 },
-              { date: "May 29th, 2022", author: "Austin Ginder", title: "Blackhole Slingshot", duration: "3:38", audio: "Starship v1/04-Blackhole Slingshot", album: "Starship v1", position: 4 },
-              { date: "May 25th, 2022", author: "Austin Ginder", title: "Lightspeed", duration: "2:41", audio: "Starship v1/05-Lightspeed", album: "Starship v1", position: 5 },
-              { date: "June 5th, 2022", author: "Austin Ginder", title: "Coasting In Space", duration: "2:17", audio: "Starship v1/06-Coasting In Space", album: "Starship v1", position: 6 },
-              { date: "June 9th, 2022", author: "Austin Ginder", title: "Data Analyzer", duration: "2:22", audio: "Starship v1/07-Data Analyzer", album: "Starship v1", position: 7 },
-              { date: "June 11th, 2022", author: "Austin Ginder", title: "Unlocked Momentum", duration: "2:58", audio: "Starship v1/08-Unlocked Momentum", album: "Starship v1", position: 8 },
-              { date: "June 13th, 2022", author: "Austin Ginder", title: "Starship Pressures", duration: "2:58", audio: "Starship v1/09-Starship Pressures", album: "Starship v1", position: 9 },
-              { date: "June 15th, 2022", author: "Austin Ginder", title: "Fuel Regulator", duration: "3:09", audio: "Starship v1/10-Fuel Regulator", album: "Starship v1", position: 10 },
-              { date: "June 16th, 2022", author: "Austin Ginder", title: "Solar Looping", duration: "2:56", audio: "Starship v1/11-Solar Looping", album: "Starship v1", position: 11 },
-              { date: "June 19th, 2022", author: "Austin Ginder", title: "Mapping The Stars", duration: "3:17", audio: "Starship v1/12-Mapping The Stars", album: "Starship v1", position: 12 },
-              { date: "July 3rd, 2022", author: "Austin Ginder", title: "Stars Never Ending", duration: "3:11", audio: "Starship v2/01-Stars Never Ending", album: "Starship v2", position: 1 },
-              { date: "July 12th, 2022", author: "Austin Ginder", title: "What's Inside?", duration: "3:51", audio: "Starship v2/02-What's Inside", album: "Starship v2", position: 2 },
-              { date: "July 24th, 2022", author: "Austin Ginder", title: "Into The Cosmos", duration: "3:46", audio: "Starship v2/03-Into The Cosmos", album: "Starship v2", position: 3 },
-              { date: "July 25th, 2022", author: "Austin Ginder", title: "Starship Blast", duration: "3:02", audio: "Starship v2/04-Starship Blast", album: "Starship v2", position: 4 },
-              { date: "July 27th, 2022", author: "Austin Ginder", title: "Mix N Match Elements", duration: "2:39", audio: "Starship v2/05-Mix N Match Elements", album: "Starship v2", position: 5 },
-              { date: "July 28th, 2022", author: "Austin Ginder", title: "Interseller Passage", duration: "3:16", audio: "Starship v2/06-Interseller Passage", album: "Starship v2", position: 6 },
-              { date: "June 24th, 2022", author: "Austin Ginder", title: "Asteroid Hunting", duration: "3:10", audio: "Starship v2/07-Asteroid Hunting", album: "Starship v2", position: 7 },
-              { date: "Aug 3rd, 2022", author: "Austin Ginder", title: "Space Probe Launch", duration: "3:07", audio: "Starship v2/08-Space Probe Launch", album: "Starship v2", position: 8 },
-              { date: "July 31st, 2022", author: "Austin Ginder", title: "Asteroid Mining", duration: "2:42", audio: "Starship v2/09-Asteroid Mining", album: "Starship v2", position: 9 },
-              { date: "Aug 7th, 2022", author: "Austin Ginder", title: "Space Probe Return", duration: "3:13", audio: "Starship v2/10-Space Probe Return", album: "Starship v2", position: 10 },
-              { date: "Aug 12th, 2022", author: "Austin Ginder", title: "Starship On Approach", duration: "3:51", audio: "Starship v2/11-Starship On Approach", album: "Starship v2", position: 11 },
-              { date: "Aug 16th, 2022", author: "Austin Ginder", title: "Starship Party", duration: "3:44", audio: "Starship v2/12-Starship Party", album: "Starship v2", position: 12 },
-              { date: "May 6th, 2022", author: "Austin Ginder", title: "Driving Force", duration: "3:34", audio: "Electric Shock/01-Driving Force", album: "Electric Shock", position: 1 },
-              { date: "May 8th, 2022", author: "Austin Ginder", title: "Electric Circuit", duration: "3:03", audio: "Electric Shock/02-Electric Circuit", album: "Electric Shock", position: 2 },
-              { date: "May 10th, 2022", author: "Austin Ginder", title: "Volts", duration: "3:33", audio: "Electric Shock/03-Volts", album: "Electric Shock", position: 3 },
-              { date: "May 11th, 2022", author: "Austin Ginder", title: "Live Wire", duration: "3:22", audio: "Electric Shock/04-Live Wire", album: "Electric Shock", position: 4 },
-              { date: "May 11th, 2022", author: "Austin Ginder", title: "Static Melody", duration: "2:23", audio: "Electric Shock/05-Static Melody", album: "Electric Shock", position: 5 },
-              { date: "May 12th, 2022", author: "Austin Ginder", title: "Cautious Discovery", duration: "3:12", audio: "Electric Shock/06-Cautious Discovery", album: "Electric Shock", position: 6 },
-              { date: "May 13th, 2022", author: "Austin Ginder", title: "Electric Eel", duration: "3:05", audio: "Electric Shock/07-Electric Eel", album: "Electric Shock", position: 7 },
-              { date: "May 18th, 2022", author: "Austin Ginder", title: "Forever Connected", duration: "4:01", audio: "Electric Shock/08-Forever Connected", album: "Electric Shock", position: 8 },
-              { date: "May 18th, 2022", author: "Austin Ginder", title: "Road Sparks", duration: "3:14", audio: "Electric Shock/09-Road Sparks", album: "Electric Shock", position: 9 },
-              { date: "May 23rd, 2022", author: "Austin Ginder", title: "Charged 100%", duration: "3:32", audio: "Electric Shock/10-Charged 100", album: "Electric Shock", position: 10 },
-              { date: "Apr 29th, 2022", author: "Austin Ginder", title: "Adventure Awaits", duration: "2:52", audio: "Ocean Sailing/01-Adventure Awaits", album: "Ocean Sailing", position: 1 },
-              { date: "May 1st, 2022", author: "Austin Ginder", title: "Ocean At Night", duration: "2:18", audio: "Ocean Sailing/02-Ocean At Night", album: "Ocean Sailing", position: 2 },
-              { date: "May 1st, 2022", author: "Austin Ginder", title: "Deep Blue Sea", duration: "2:55", audio: "Ocean Sailing/03-Deep Blue Sea", album: "Ocean Sailing", position: 3 },
-              { date: "May 2nd, 2022", author: "Austin Ginder", title: "Waves Of Resistance", duration: "3:02", audio: "Ocean Sailing/04-Waves Of Resistance", album: "Ocean Sailing", position: 4 },
-              { date: "May 2nd, 2022", author: "Austin Ginder", title: "Breakthrough Voyage", duration: "3:44", audio: "Ocean Sailing/05-Breakthrough Voyage", album: "Ocean Sailing", position: 5 },
-              { date: "May 3rd, 2022", author: "Austin Ginder", title: "Spacious Freedom", duration: "2:48", audio: "Ocean Sailing/06-Spacious Freedom", album: "Ocean Sailing", position: 6 },
-              { date: "May 4th, 2022", author: "Austin Ginder", title: "Chasing Creatures Of The Sea", duration: "3:28", audio: "Ocean Sailing/07-Chasing Creatures Of The Sea", album: "Ocean Sailing", position: 7 },
-              { date: "May 4th, 2022", author: "Austin Ginder", title: "Jelly Discovery", duration: "3:00", audio: "Ocean Sailing/08-Jelly Discovery", album: "Ocean Sailing", position: 8 },
-              { date: "May 5th, 2022", author: "Austin Ginder", title: "Free-floating Exploration", duration: "3:08", audio: "Ocean Sailing/09-Free-floating Exploration", album: "Ocean Sailing", position: 9 },
-              { date: "May 6th, 2022", author: "Austin Ginder", title: "Clear Night Sky", duration: "3:08", audio: "Ocean Sailing/10-Clear Night Sky", album: "Ocean Sailing", position: 10 },
-              { date: "Apr 11th, 2022", author: "Austin Ginder", title: "Space Mountains", duration: "3:22", audio: "Volcanic Oceans/01-Space Mountains", album: "Volcanic Oceans", position: 1 },
-              { date: "Apr 11th, 2022", author: "Austin Ginder", title: "Ocean Planet", duration: "2:54", audio: "Volcanic Oceans/02-Ocean Planet", album: "Volcanic Oceans", position: 2 },
-              { date: "Apr 12th, 2022", author: "Austin Ginder", title: "Tidal Forces", duration: "2:49", audio: "Volcanic Oceans/03-Tidal Forces", album: "Volcanic Oceans", position: 3 },
-              { date: "Apr 13th, 2022", author: "Austin Ginder", title: "Raining Lava", duration: "3:22", audio: "Volcanic Oceans/04-Raining Lava", album: "Volcanic Oceans", position: 4 },
-              { date: "Apr 14th, 2022", author: "Austin Ginder", title: "Ring of Campfires", duration: "2:53", audio: "Volcanic Oceans/05-Ring of Campfires", album: "Volcanic Oceans", position: 5 },
-              { date: "Apr 19th, 2022", author: "Austin Ginder", title: "Internal Pressure", duration: "3:26", audio: "Volcanic Oceans/06-Internal Pressure", album: "Volcanic Oceans", position: 6 },
-              { date: "Apr 21st, 2022", author: "Austin Ginder", title: "Sea Of Life", duration: "3:19", audio: "Volcanic Oceans/07-Sea Of Life", album: "Volcanic Oceans", position: 7 },
-              { date: "Apr 24st, 2022", author: "Austin Ginder", title: "Water Rocks", duration: "3:32", audio: "Volcanic Oceans/08-Water Rocks", album: "Volcanic Oceans", position: 8 },
-              { date: "Apr 27st, 2022", author: "Austin Ginder", title: "Lava Surfing", duration: "2:38", audio: "Volcanic Oceans/09-Lava Surfing", album: "Volcanic Oceans", position: 9 },
-              { date: "Apr 29st, 2022", author: "Austin Ginder", title: "Planetary Lifecycle", duration: "3:03", audio: "Volcanic Oceans/10-Planetary Lifecycle", album: "Volcanic Oceans", position: 10 },
-              { date: "Mar 28th, 2022", author: "Austin Ginder", title: "Zoom Ray", duration: "3:12", audio: "Atomic World/01-Zoom Ray", album: "Atomic World", position: 1 },
-              { date: "Mar 29th, 2022", author: "Austin Ginder", title: "Tiny Warp", duration: "4:25", audio: "Atomic World/02-Tiny Warp", album: "Atomic World", position: 2 },
-              { date: "Apr 2nd, 2022", author: "Austin Ginder", title: "The Observer Effect", duration: "3:12", audio: "Atomic World/03-The Observer Effect", album: "Atomic World", position: 3 },
-              { date: "Apr 2nd, 2022", author: "Austin Ginder", title: "Nanosecond", duration: "2:51", audio: "Atomic World/04-Nanosecond", album: "Atomic World", position: 4 },
-              { date: "Apr 4nd, 2022", author: "Austin Ginder", title: "Electrons", duration: "3:01", audio: "Atomic World/05-Electrons", album: "Atomic World", position: 5 },
-              { date: "Apr 5nd, 2022", author: "Austin Ginder", title: "Neutrons", duration: "3:36", audio: "Atomic World/06-Neutrons", album: "Atomic World", position: 6 },
-              { date: "Apr 5nd, 2022", author: "Austin Ginder", title: "Protons", duration: "3:36", audio: "Atomic World/07-Protons", album: "Atomic World", position: 7 },
-              { date: "Apr 6nd, 2022", author: "Austin Ginder", title: "Nucleus", duration: "2:53", audio: "Atomic World/08-Nucleus", album: "Atomic World", position: 8 },
-              { date: "Apr 10th, 2022", author: "Austin Ginder", title: "Zoom Ray Out", duration: "3:00", audio: "Atomic World/09-Zoom Ray Out", album: "Atomic World", position: 9 },
-              { date: "Mar 16th, 2022", author: "Austin Ginder", title: "Unknown Formula", duration: "3:33", audio: "Cosmic Mysteries/01-Unknown Formula", album: "Cosmic Mysteries", position: 1 },
-              { date: "Mar 17th, 2022", author: "Austin Ginder", title: "Theories Unending", duration: "4:07", audio: "Cosmic Mysteries/02-Theories Unending", album: "Cosmic Mysteries", position: 2 },
-              { date: "Mar 18th, 2022", author: "Austin Ginder", title: "Structures Of Wonder", duration: "3:07", audio: "Cosmic Mysteries/03-Structures Of Wonder", album: "Cosmic Mysteries", position: 3 },
-              { date: "Mar 19th, 2022", author: "Austin Ginder", title: "Flowering Galaxies", duration: "3:00", audio: "Cosmic Mysteries/04-Flowering Galaxies", album: "Cosmic Mysteries", position: 4 },
-              { date: "Mar 20th, 2022", author: "Austin Ginder", title: "Dimensional Layering", duration: "3:40", audio: "Cosmic Mysteries/05-Dimensional Layering", album: "Cosmic Mysteries", position: 5 },
-              { date: "Mar 21th, 2022", author: "Austin Ginder", title: "Blackhole Crusher", duration: "2:54", audio: "Cosmic Mysteries/06-Blackhole Crusher", album: "Cosmic Mysteries", position: 6 },
-              { date: "Mar 22th, 2022", author: "Austin Ginder", title: "Folding Space-Time", duration: "2:43", audio: "Cosmic Mysteries/07-Folding Space-Time", album: "Cosmic Mysteries", position: 7 },
-              { date: "Mar 23th, 2022", author: "Austin Ginder", title: "Marvelous Universe", duration: "3:16", audio: "Cosmic Mysteries/08-Marvelous Universe", album: "Cosmic Mysteries", position: 8 },
-              { date: "Mar 25th, 2022", author: "Austin Ginder", title: "Background Scanner", duration: "3:48", audio: "Cosmic Mysteries/09-Background Scanner", album: "Cosmic Mysteries", position: 9 },
-              { date: "Mar 26th, 2022", author: "Austin Ginder", title: "Dreams Beyond", duration: "3:33", audio: "Cosmic Mysteries/10-Dreams Beyond", album: "Cosmic Mysteries", position: 10 },
-              { date: "Mar 3rd, 2022", author: "Austin Ginder", title: "Lumination", duration: "3:01", audio: "Lumination/01-Lumination", album: "Lumination", position: 1 },
-              { date: "Mar 2nd, 2022", author: "Austin Ginder", title: "Contemplative Thoughts", duration: "2:59", audio: "Lumination/02-Contemplative Thoughts", album: "Lumination", position: 2 },
-              { date: "Mar 3rd, 2022", author: "Austin Ginder", title: "Which Question?", duration: "2:43", audio: "Lumination/03-Which Question", album: "Lumination", position: 3 },
-              { date: "Mar 5th, 2022", author: "Austin Ginder", title: "Radiant Pursuit", duration: "3:16", audio: "Lumination/04-Radiant Pursuit", album: "Lumination", position: 4 },
-              { date: "Mar 7th, 2022", author: "Austin Ginder", title: "Guiding Pulse", duration: "4:04", audio: "Lumination/05-Guiding Pulse", album: "Lumination", position: 5 },
-              { date: "Mar 9th, 2022", author: "Austin Ginder", title: "Beaming Into Darkness", duration: "2:43", audio: "Lumination/06-Beaming Into Darkness", album: "Lumination", position: 6 },
-              { date: "Mar 9th, 2022", author: "Austin Ginder", title: "In The Light", duration: "3:16", audio: "Lumination/07-In The Light", album: "Lumination", position: 7 },
-              { date: "Mar 12th, 2022", author: "Austin Ginder", title: "New Day Dawning", duration: "4:12", audio: "Lumination/08-New Day Dawning", album: "Lumination", position: 8 },
-              { date: "Mar 12th, 2022", author: "Austin Ginder", title: "Reflective Brilliance", duration: "4:35", audio: "Lumination/09-Reflective Brilliance", album: "Lumination", position: 9 },
-              { date: "Feb 21th, 2022", author: "Austin Ginder", title: "Roving The Stars", duration: "3:45", audio: "Planetary Classifier/01-Roving The Stars", album: "Planetary Classifier", position: 1 },
-              { date: "Feb 22th, 2022", author: "Austin Ginder", title: "Epic Giants", duration: "4:00", audio: "Planetary Classifier/02-Epic Giants", album: "Planetary Classifier", position: 2 },
-              { date: "Feb 22th, 2022", author: "Austin Ginder", title: "Floating Rocks", duration: "3:15", audio: "Planetary Classifier/03-Floating Rocks", album: "Planetary Classifier", position: 3 },
-              { date: "Feb 23th, 2022", author: "Austin Ginder", title: "Perfect Orbits", duration: "3:20", audio: "Planetary Classifier/04-Perfect Orbits", album: "Planetary Classifier", position: 4 },
-              { date: "Feb 23th, 2022", author: "Austin Ginder", title: "Irregular Spin", duration: "3:43", audio: "Planetary Classifier/05-Irregular Spin", album: "Planetary Classifier", position: 5 },
-              { date: "Feb 25th, 2022", author: "Austin Ginder", title: "Edge Of Fire", duration: "3:30", audio: "Planetary Classifier/06-Edge Of Fire", album: "Planetary Classifier", position: 6 },
-              { date: "Feb 26th, 2022", author: "Austin Ginder", title: "Endless Worlds", duration: "3:45", audio: "Planetary Classifier/07-Endless Worlds", album: "Planetary Classifier", position: 7 },
-              { date: "Feb 28th, 2022", author: "Austin Ginder", title: "Double Rings", duration: "3:22", audio: "Planetary Classifier/08-Double Rings", album: "Planetary Classifier", position: 8 },
-              { date: "Feb 28th, 2022", author: "Austin Ginder", title: "Diamond Clouds", duration: "4:30", audio: "Planetary Classifier/09-Diamond Clouds", album: "Planetary Classifier", position: 9 },
-              { date: "Mar 1st, 2022", author: "Austin Ginder", title: "The Star Dance", duration: "4:56", audio: "Planetary Classifier/10-The Star Dance", album: "Planetary Classifier", position: 10 },
-              { date: "Feb 10th, 2022", author: "Austin Ginder", title: "Barren Land", duration: "2:38", audio: "Arctic Expedition/01-Barren Land", album: "Arctic Expedition", position: 1 },
-              { date: "Feb 11th, 2022", author: "Austin Ginder", title: "Remote Explorers", duration: "3:36", audio: "Arctic Expedition/02-Remote Explorers", album: "Arctic Expedition", position: 2 },
-              { date: "Feb 12th, 2022", author: "Austin Ginder", title: "The Sleepy Arctic Fox", duration: "4:07", audio: "Arctic Expedition/03-The Sleepy Arctic Fox", album: "Arctic Expedition", position: 3 },
-              { date: "Feb 12th, 2022", author: "Austin Ginder", title: "Night Sky Colors", duration: "3:18", audio: "Arctic Expedition/04-Night Sky Colors", album: "Arctic Expedition", position: 4 },
-              { date: "Feb 13th, 2022", author: "Austin Ginder", title: "Sweeping Snow", duration: "3:00", audio: "Arctic Expedition/05-Sweeping Snow", album: "Arctic Expedition", position: 5 },
-              { date: "Feb 14th, 2022", author: "Austin Ginder", title: "Diving Puffins", duration: "3:36", audio: "Arctic Expedition/06-Diving Puffins", album: "Arctic Expedition", position: 6 },
-              { date: "Feb 15th, 2022", author: "Austin Ginder", title: "Polar Bear Life", duration: "4:07", audio: "Arctic Expedition/07-Polar Bear Life", album: "Arctic Expedition", position: 7 },
-              { date: "Feb 16th, 2022", author: "Austin Ginder", title: "Walrus In Town", duration: "3:30", audio: "Arctic Expedition/08-Walrus In Town", album: "Arctic Expedition", position: 8 },
-              { date: "Feb 17th, 2022", author: "Austin Ginder", title: "An Arctic Outro", duration: "3:43", audio: "Arctic Expedition/09-An Arctic Outro", album: "Arctic Expedition", position: 9 },
-              { date: "Jan 25th, 2022", author: "Austin Ginder", title: "Rising Valor", duration: "3:08", audio: "Victory/01-Rising Valor", album: "Victory", position: 1  },
-              { date: "Jan 27th, 2022", author: "Austin Ginder", title: "Always Peace", duration: "3:08", audio: "Victory/02-Always Peace", album: "Victory", position: 2 },
-              { date: "Feb 5th, 2022", author: "Austin Ginder", title: "Forward AnCarried By The Lightm", duration: "3:12", audio: "Victory/03-Forward AnCarried By The Lightm", album: "Victory", position: 3 },
-              { date: "Jan 26th, 2022", author: "Austin Ginder", title: "Triumphed Steps", duration: "3:08", audio: "Victory/04-Triumphed Steps", album: "Victory", position: 4 },
-              { date: "Feb 6th, 2022", author: "Austin Ginder", title: "Hidden Treasures", duration: "3:56", audio: "Victory/05-Hidden Treasures", album: "Victory", position: 5 },
-              { date: "Feb 7th, 2022", author: "Austin Ginder", title: "Limitless Creativity", duration: "3:44", audio: "Victory/06-Limitless Creativity", album: "Victory", position: 6 },
-              { date: "Feb 7th, 2022", author: "Austin Ginder", title: "Thoughts Exploding", duration: "3:27", audio: "Victory/07-Thoughts Exploding", album: "Victory", position: 7 },
-              { date: "Feb 9th, 2022", author: "Austin Ginder", title: "Glorious Happenings", duration: "2:54", audio: "Victory/08-Glorious Happenings", album: "Victory", position: 8 },
-              { date: "Feb 9th, 2022", author: "Austin Ginder", title: "Overtaken By Blessings", duration: "5:16", audio: "Victory/09-Overtaken By Blessings", album: "Victory", position: 9 },
-              { date: "Jan 6th, 2022", author: "Austin Ginder", title: "Cosmic Explorer", duration: "3:01", audio: "Cosmic Explorer/01-Cosmic Explorer", album: "Cosmic Explorer", position: 1 },
-              { date: "Jan 7th, 2022", author: "Austin Ginder", title: "Solar Sailing", duration: "2:51", audio: "Cosmic Explorer/02-Solar Sailing", album: "Cosmic Explorer", position: 2 },
-              { date: "Jan 10th, 2022", author: "Austin Ginder", title: "Journey Into Unknown", duration: "3:15", audio: "Cosmic Explorer/03-Journey Into Unknown", album: "Cosmic Explorer", position: 3 },
-              { date: "Jan 11th, 2022", author: "Austin Ginder", title: "Alien World", duration: "3:42", audio: "Cosmic Explorer/04-Alien World", album: "Cosmic Explorer", position: 4 },
-              { date: "Jan 12th, 2022", author: "Austin Ginder", title: "Diamond Forest", duration: "3:12", audio: "Cosmic Explorer/05-Diamond Forest", album: "Cosmic Explorer", position: 5 },
-              { date: "Jan 13th, 2022", author: "Austin Ginder", title: "Space Party", duration: "4:01", audio: "Cosmic Explorer/06-Space Party", album: "Cosmic Explorer", position: 6 },
-              { date: "Jan 16th, 2022", author: "Austin Ginder", title: "Alien Life", duration: "4:36", audio: "Cosmic Explorer/07-Alien Life", album: "Cosmic Explorer", position: 7 },
-              { date: "Jan 16th, 2022", author: "Austin Ginder", title: "Orbital Velocity", duration: "3:14", audio: "Cosmic Explorer/08-Orbital Velocity", album: "Cosmic Explorer", position: 8 },
-              { date: "Jan 22th, 2022", author: "Austin Ginder", title: "Mission Lightspeed", duration: "3:19", audio: "Cosmic Explorer/09-Mission Lightspeed", album: "Cosmic Explorer", position: 9 },
-              { date: "Dec 21th, 2021", author: "Austin Ginder", title: "PanCarried By The Lightr On The Move", duration: "6:16", audio: "Exploring Everglades/01-PanCarried By The Lightr On The Move", album: "Exploring Everglades", position: 1 },
-              { date: "Dec 19th, 2021", author: "Austin Ginder", title: "Little Sea Turtle", duration: "4:20", audio: "Exploring Everglades/02-Little Sea Turtle", album: "Exploring Everglades", position: 2 },
-              { date: "Dec 16th, 2021", author: "Austin Ginder", title: "Manatees Hiding", duration: "4:41", audio: "Exploring Everglades/03-Manatees Hiding", album: "Exploring Everglades", position: 3 },
-              { date: "Dec 23th, 2021", author: "Austin Ginder", title: "Starfish Twinkle", duration: "2:51", audio: "Exploring Everglades/04-Starfish Twinkle", album: "Exploring Everglades", position: 4 },
-              { date: "Dec 28th, 2021", author: "Austin Ginder", title: "Egrets Away", duration: "5:02", audio: "Exploring Everglades/05-Egrets Away", album: "Exploring Everglades", position: 5 },
-              { date: "Dec 29th, 2021", author: "Austin Ginder", title: "Dolphin's Paradise", duration: "3:02", audio: "Exploring Everglades/06-Dolphin's Paradise", album: "Exploring Everglades", position: 6 },
-              { date: "Dec 30th, 2021", author: "Austin Ginder", title: "Airboat Mania!", duration: "4:18", audio: "Exploring Everglades/07-Airboat Mania", album: "Exploring Everglades", position: 7 },
-              { date: "Jan 2nd, 2022", author: "Austin Ginder", title: "Reflective Waters", duration: "3:43", audio: "Exploring Everglades/08-Reflective Waters", album: "Exploring Everglades", position: 8 },
-              { date: "Oct 21st, 2021", author: "Austin Ginder", title: "Hello World", duration: "3:13", audio: "Hello XYZ/01-Hello World", album: "Hello XYZ", position: 1 },
-              { date: "Nov 27th, 2021", author: "Austin Ginder", title: "L500", duration: "2:23", audio: "Hello XYZ/02-L500", album: "Hello XYZ", position: 2 },
-              { date: "Dec 4th, 2021", author: "Austin Ginder", title: "T100", duration: "2:27", audio: "Hello XYZ/03-T100", album: "Hello XYZ", position: 3 },
-              { date: "Dec 9th, 2021", author: "Austin Ginder", title: "A37", duration: "4:15", audio: "Hello XYZ/04-A37", album: "Hello XYZ", position: 4 },
-              { date: "Nov 26th, 2021", author: "Austin Ginder", title: "A1", duration: "2:37", audio: "Hello XYZ/05-A1", album: "Hello XYZ", position: 5 },
-              { date: "Dec 7th, 2021", author: "Austin Ginder", title: "i5", duration: "3:52", audio: "Hello XYZ/06-i5", album: "Hello XYZ", position: 6 },
-              { date: "Dec 2nd, 2021", author: "Austin Ginder", title: "M2", duration: "3:46", audio: "Hello XYZ/07-M2", album: "Hello XYZ", position: 7 },
-              { date: "Dec 10th, 2021", author: "Austin Ginder", title: "E3PO", duration: "3:39", audio: "Hello XYZ/08-E3PO", album: "Hello XYZ", position: 8 },
-              { date: "Dec 13th, 2021", author: "Austin Ginder", title: "C35", duration: "4:00", audio: "Hello XYZ/09-C35", album: "Hello XYZ", position: 9 },
-          ],
-          albums: [
-              { date: "December 1st 2025", author: "Austin Ginder", title: "Desert Adventures" },
-              { date: "July 1st 2025", author: "Austin Ginder", title: "Lands of Hidden Gems" },
-              { date: "January 1st 2025", author: "Austin Ginder", title: "Planet Drase" },
-              { date: "October 1st 2024", author: "Austin Ginder", title: "Desert Life" },
-              { date: "July 1st 2024", author: "Austin Ginder", title: "Ocean Life" },
-              { date: "April 1st 2024", author: "Austin Ginder", title: "Volcano Mountain" },
-              { date: "January 1st 2024", author: "Austin Ginder", title: "Mission Control" },
-              { date: "December 14th 2023", author: "Austin Ginder", title: "Command Outpost" },
-              { date: "November 14th 2023", author: "Austin Ginder", title: "Captain Fox" },
-              { date: "October 14th 2023", author: "Austin Ginder", title: "Magenta City" },
-              { date: "September 14th 2023", author: "Austin Ginder", title: "Robot Warriors" },
-              { date: "August 14th 2023", author: "Austin Ginder", title: "Underground Caverns" },
-              { date: "July 14th 2023", author: "Austin Ginder", title: "Prehistoric Creatures" },
-              { date: "June 14th 2023", author: "Austin Ginder", title: "Unknown Space-Time" },
-              { date: "May 14th 2023", author: "Austin Ginder", title: "Carried By The Light" },
-              { date: "April 14th 2023", author: "Austin Ginder", title: "Robot Protectors" },
-              { date: "March 14th 2023", author: "Austin Ginder", title: "Tiny Bit Adventures" },
-              { date: "February 14th 2023", author: "Austin Ginder", title: "Starship v2" },
-              { date: "January 14th 2023", author: "Austin Ginder", title: "Starship v1" },
-              { date: "December 22nd 2022", author: "Austin Ginder", title: "Electric Shock" },
-              { date: "November 22nd 2022", author: "Austin Ginder", title: "Ocean Sailing" },
-              { date: "October 22nd 2022", author: "Austin Ginder", title: "Volcanic Oceans" },
-              { date: "September 22nd 2022", author: "Austin Ginder", title: "Atomic World" },
-              { date: "August 22nd 2022", author: "Austin Ginder", title: "Cosmic Mysteries" },
-              { date: "July 22nd 2022", author: "Austin Ginder", title: "Lumination" },
-              { date: "June 22nd 2022", author: "Austin Ginder", title: "Planetary Classifier" },
-              { date: "May 22nd 2022", author: "Austin Ginder", title: "Arctic Expedition" },
-              { date: "April 22nd 2022", author: "Austin Ginder", title: "Victory" },
-              { date: "March 22nd 2022", author: "Austin Ginder", title: "Cosmic Explorer" },
-              { date: "February 22nd 2022", author: "Austin Ginder", title: "Exploring Everglades" },
-              { date: "January 22nd 2022", author: "Austin Ginder", title: "Hello XYZ" }
-          ],
+          local_share_url: "",
+          share_url: "",
+          tracks: [],
+          albums: [],
           selected_item: {},
           selected_item_index: null,
-          selected_album_index: null,
           duration: 0,
           isMuted: false,
           paused: false,
@@ -551,28 +200,65 @@
           sound: {},
           loaded: false,
       },
-      mounted() {
-        this.albums.forEach( a => a.position = "" )
-        if ( window.location.host.endsWith( ".localhost" ) ) {
-          this.share_url = this.local_share_url
+      async mounted() {
+      // Fetch the data
+      try {
+        const response = await fetch('data.json'); // Path to your JSON file
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        window.addEventListener('keydown', (e) => {
-          if (e.key == 32 || e.key == ' ') {
-            this.sound.playing() ? this.sound.pause() : this.sound.play()
-            e.preventDefault()
+        const data = await response.json();
+
+        // Assign fetched data to Vue data properties
+        this.tracks = data.tracks;
+        this.albums = data.albums;
+        this.local_share_url = data.local_share_url;
+        this.share_url = data.share_url;
+
+        // Ensure album positions are initialized *after* albums are loaded
+        this.albums.forEach( a => this.$set(a, 'position', null) ); // Use $set for reactivity
+
+        if ( window.location.host.endsWith( ".localhost" ) ) {
+          this.share_url = this.local_share_url;
+        }
+
+      } catch (error) {
+        console.error("Could not load music data:", error);
+        // Handle the error appropriately, maybe show a message to the user
+      }
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key == 32 || e.key == ' ') {
+          // Check if sound object exists and has methods before calling them
+          if (this.sound && typeof this.sound.playing === 'function' && this.loaded) {
+            this.sound.playing() ? this.sound.pause() : this.sound.play();
           }
-        })
+          e.preventDefault();
+        } else if (e.key === 'ArrowRight' && this.loaded) {
+            this.playNext();
+            e.preventDefault();
+        } else if (e.key === 'ArrowLeft' && this.loaded) {
+            this.playPrevious();
+            e.preventDefault();
+        }
+      });
       },
       filters: {
         formatTime: function ( value ) {
           var sec_num = parseInt(value, 10); // don't forget the second param
+          if (isNaN(sec_num)) return '00:00'; // Handle cases where value is not a number
           var hours   = Math.floor(sec_num / 3600);
           var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
           var seconds = sec_num - (hours * 3600) - (minutes * 60);
 
-          if (hours   < 10) { hours   = "0"+hours }
+          // Always show minutes and seconds
+          // if (hours   < 10) { hours   = "0"+hours } // Only show hours if > 0
           if (minutes < 10) { minutes = "0"+minutes }
           if (seconds < 10) { seconds = "0"+seconds }
+
+          if (hours > 0) {
+              return hours + ':' + minutes + ':' + seconds;
+          }
           return minutes + ':' + seconds;
         },
       },
@@ -586,7 +272,9 @@
           return this.tracks.filter( t => t.album == "" || ! t.album )
         },
         currentTime() {
-          return this.duration * ( this.percentage / 100 )
+          // Ensure duration is a number before calculation
+          const dur = typeof this.duration === 'number' ? this.duration : 0;
+          return dur * ( this.percentage / 100 )
         },
         totalTime() {
           var minutes = 0
@@ -594,28 +282,36 @@
           var hours = 0
 
           this.tracks.forEach( item => {
-              time = item.duration.split(":")
-              minutes = minutes + parseInt( time[0] )
-              seconds = seconds + parseInt( time[1] )
+              if (item.duration && typeof item.duration === 'string') {
+                  const time = item.duration.split(":");
+                  if (time.length === 2) {
+                      minutes = minutes + parseInt( time[0] ) || 0;
+                      seconds = seconds + parseInt( time[1] ) || 0;
+                  } else if (time.length === 3) { // Handle hh:mm:ss format if present
+                      hours = hours + parseInt( time[0] ) || 0;
+                      minutes = minutes + parseInt( time[1] ) || 0;
+                      seconds = seconds + parseInt( time[2] ) || 0;
+                  }
+              }
           })
 
-          if ( seconds > 60 ) {
-            minutes = minutes + parseInt( seconds / 60 )
-            seconds = seconds % 60
+          if ( seconds >= 60 ) {
+            minutes = minutes + Math.floor( seconds / 60 );
+            seconds = seconds % 60;
           }
 
-          if ( minutes > 60 ) {
-            hours = hours + parseInt( minutes / 60 )
-            minutes = minutes % 60
+          if ( minutes >= 60 ) {
+            hours = hours + Math.floor( minutes / 60 );
+            minutes = minutes % 60;
           }
 
-          minutes = this.pad( minutes )
-          seconds = this.pad( seconds )
-          
+          minutes = this.pad( minutes );
+          seconds = this.pad( seconds );
+
           if ( hours > 0 ) {
-            return `${hours}:${minutes}:${seconds}`
+            return `${hours}:${minutes}:${seconds}`;
           }
-          return `${minutes}:${seconds}`
+          return `${minutes}:${seconds}`;
         }
       },
       methods: {
@@ -625,31 +321,45 @@
           var hours = 0
 
           tracks.forEach( item => {
-              time = item.duration.split(":")
-              minutes = minutes + parseInt( time[0] )
-              seconds = seconds + parseInt( time[1] )
+              if (item.duration && typeof item.duration === 'string') {
+                  const time = item.duration.split(":");
+                   if (time.length === 2) {
+                      minutes = minutes + parseInt( time[0] ) || 0;
+                      seconds = seconds + parseInt( time[1] ) || 0;
+                  } else if (time.length === 3) {
+                      hours = hours + parseInt( time[0] ) || 0;
+                      minutes = minutes + parseInt( time[1] ) || 0;
+                      seconds = seconds + parseInt( time[2] ) || 0;
+                  }
+              }
           })
 
-          if ( seconds > 60 ) {
-            minutes = minutes + parseInt( seconds / 60 )
-            seconds = seconds % 60
+          if ( seconds >= 60 ) {
+            minutes = minutes + Math.floor( seconds / 60 );
+            seconds = seconds % 60;
           }
 
-          if ( minutes > 60 ) {
-            hours = hours + parseInt( minutes / 60 )
-            minutes = minutes % 60
+          if ( minutes >= 60 ) {
+            hours = hours + Math.floor( minutes / 60 );
+            minutes = minutes % 60;
           }
+
+          minutes = this.pad( minutes );
+          seconds = this.pad( seconds );
 
           if ( hours > 0 ) {
-            return `${hours}:${minutes}:${seconds}`
+            return `${hours}:${minutes}:${seconds}`;
           }
-          minutes = this.pad( minutes )
-          seconds = this.pad( seconds )
-          return `${minutes}:${seconds}`
+          return `${minutes}:${seconds}`;
         },
         albumTracks( album ) {
+            // Ensure tracks is an array before filtering/sorting
+            if (!Array.isArray(this.tracks)) return [];
             return this.tracks.filter( t => t.album == album.title ).sort( function (x, y) {
-              return x.position - y.position
+              // Ensure positions are numbers for correct sorting
+              const posX = typeof x.position === 'number' ? x.position : Infinity;
+              const posY = typeof y.position === 'number' ? y.position : Infinity;
+              return posX - posY;
           } )
         },
         pad(num) {
@@ -658,19 +368,35 @@
           return num;
         },
         playAudio() {
-          Howler.unload();
+          // Stop and unload previous sound if it exists
+          if (this.sound && typeof this.sound.unload === 'function') {
+            Howler.unload();
+          }
+          this.loaded = false; // Reset loaded state
+          this.playing = false;
+          this.paused = false;
+          this.percentage = 0;
+          this.duration = 0; // Reset duration
 
           // Check if the newly selected item is a single track
-          if (this.selected_item.album == "" || !this.selected_item.album) {
+          if (this.selected_item_index !== null) {
             // It's a single track, so deselect any active track in all albums
             this.albums.forEach(a => a.position = null);
           } else {
             // It's an album track. Deselect any active single track.
             this.selected_item_index = null;
-            // Deselect active tracks in OTHER albums.
+            // Ensure the correct album's position is set, deselect others
             this.albums.forEach(a => {
               if (a.title !== this.selected_item.album) {
                 a.position = null;
+              }
+              // Find the index for the v-model binding
+              else {
+                  const tracksInAlbum = this.albumTracks(a);
+                  const trackIndex = tracksInAlbum.findIndex(t => t.title === this.selected_item.title);
+                  if (trackIndex !== -1) {
+                      a.position = trackIndex;
+                  }
               }
             });
           }
@@ -678,39 +404,53 @@
           // Ensure selected_item and audio path exist
           if (!this.selected_item || !this.selected_item.audio) {
             console.error("Selected item or audio path is missing.");
-            this.loaded = false;
-            this.playing = false;
-            return;
+            return; // Exit if no valid item/audio
           }
+
           this.sound = new Howl({
             src: [
               `${this.share_url}/${this.selected_item.audio}.webm`,
               `${this.share_url}/${this.selected_item.audio}.mp3`,
             ],
             volume: this.playerVolume, // Set initial volume
+            html5: true, // Use HTML5 Audio to improve seeking performance and compatibility
             // Use arrow functions to retain 'this' context
             onmute: () => {
-              this.toggleMute();
+              this.isMuted = this.sound.mute(); // Update state based on actual mute status
+            },
+            onvolume: () => {
+                // Optional: Update volume slider if changed externally?
+                // this.playerVolume = Howler.volume();
             },
             onplay: () => {
-              this.togglePlay();
+              this.playing = true;
+              this.paused = false;
+              this.duration = this.sound.duration(); // Get duration on play
               requestAnimationFrame(this.step); // Start progress update
             },
             onpause: () => {
-              this.togglePlay();
+              this.playing = false;
+              this.paused = true;
             },
             onstop: () => {
               // Reset state on stop
               this.playing = false;
               this.paused = false;
               this.percentage = 0;
-              this.duration = 0;
+              // Don't reset duration here, keep it for display until next load
               // Optionally deselect item visually?
               // this.selected_item_index = null;
               // this.albums.forEach(a => a.position = null);
             },
             onend: () => {
-              this.playNext(); // Autoplay next track if enabled
+              this.playing = false; // Mark as not playing
+              this.percentage = 100; // Show progress bar full
+              if (this.autoplay) {
+                  this.playNext(true); // Pass flag indicating it's from onend
+              } else {
+                  // If not autoplaying, reset percentage after a short delay
+                  // setTimeout(() => { this.percentage = 0; }, 200);
+              }
             },
             onload: () => {
               this.duration = this.sound.duration();
@@ -720,6 +460,8 @@
               console.error("Error loading audio:", err, this.selected_item.audio);
               this.loaded = false;
               this.playing = false;
+              this.duration = 0;
+              this.percentage = 0;
               // Handle error display to user if needed
             },
             onplayerror: (id, err) => {
@@ -729,81 +471,253 @@
               // Handle error display to user if needed
             },
             });
-          this.sound.play()
-          this.playing = true
-          this.loaded = true
-          this.percentage = this.sound.seek()
+          this.sound.play();
+          // Don't set playing=true here, rely on onplay callback
+          // Don't set loaded=true here, rely on onload callback
         },
         toggleMute() {
-          this.isMuted = this.sound.mute()
+          // This method might not be needed if onmute handles state update
+          // this.isMuted = this.sound.mute()
         },
         togglePlay() {
-          this.playing = this.sound.playing()
-          this.paused = ! this.sound.playing()
+          // This method might not be needed if onplay/onpause handle state update
+          // this.playing = this.sound.playing()
+          // this.paused = ! this.sound.playing()
         },
-        playNext() {
-          if ( ! this.autoplay ) {
-            return
+        playNext(fromOnEnd = false) {
+          // If called manually (not from onend) and not autoplaying, just stop.
+          if (!fromOnEnd && !this.autoplay) {
+              if (this.sound && typeof this.sound.stop === 'function') {
+                  this.sound.stop();
+              }
+              return;
           }
-          if ( this.selected_item.album == "" || ! this.selected_item.album ) {
-            found_track = false
-            should_skip = false
-            this.singleTracks.forEach( ( t, index ) => {
-              if ( should_skip ) {
-                return
+          if (!this.selected_item || !this.loaded) return; // Don't proceed if nothing is selected/loaded
+
+          let nextTrack = null;
+          let nextSingleIndex = null;
+          let nextAlbumTitle = null;
+          let nextAlbumPosition = null;
+
+          // --- Case 1: Current track is a single ---
+          if (this.selected_item_index !== null) {
+              const currentIndex = this.selected_item_index;
+              if (currentIndex < this.singleTracks.length - 1) {
+                  // Play next single track
+                  nextSingleIndex = currentIndex + 1;
+                  nextTrack = this.singleTracks[nextSingleIndex];
+              } else {
+                  // Last single track, move to first album (if exists)
+                  if (this.albums.length > 0) {
+                      const firstAlbum = this.albums[0];
+                      const tracksInFirstAlbum = this.albumTracks(firstAlbum);
+                      if (tracksInFirstAlbum.length > 0) {
+                          nextAlbumTitle = firstAlbum.title;
+                          nextAlbumPosition = 0; // v-model index
+                          nextTrack = tracksInFirstAlbum[0];
+                      }
+                  }
+                  // If no albums, wrap around to first single or stop (handled by lack of nextTrack)
+                  else if (this.singleTracks.length > 0 && this.autoplay) { // Wrap singles only if autoplaying
+                      nextSingleIndex = 0;
+                      nextTrack = this.singleTracks[0];
+                  }
               }
-              if ( found_track ) {
-                should_skip = true
-                this.albums.forEach( a => a.position = "" )
-                this.selected_item = this.singleTracks[index]
-                this.selected_item_index = index
-                this.playAudio()
-                return
+          }
+          // --- Case 2: Current track is in an album ---
+          else if (this.selected_item.album) {
+              const currentAlbumTitle = this.selected_item.album;
+              const currentAlbumIndex = this.albums.findIndex(a => a.title === currentAlbumTitle);
+              const currentAlbum = this.albums[currentAlbumIndex];
+              const tracksInCurrentAlbum = this.albumTracks(currentAlbum);
+              const currentTrackIndexInAlbum = tracksInCurrentAlbum.findIndex(t => t.title === this.selected_item.title); // Index within the filtered list
+
+              if (currentTrackIndexInAlbum < tracksInCurrentAlbum.length - 1) {
+                  // Play next track in the same album
+                  nextAlbumTitle = currentAlbumTitle;
+                  nextAlbumPosition = currentTrackIndexInAlbum + 1;
+                  nextTrack = tracksInCurrentAlbum[nextAlbumPosition];
+              } else {
+                  // Last track in this album, move to the next album (if exists)
+                  if (currentAlbumIndex < this.albums.length - 1) {
+                      const nextAlbum = this.albums[currentAlbumIndex + 1];
+                      const tracksInNextAlbum = this.albumTracks(nextAlbum);
+                      if (tracksInNextAlbum.length > 0) {
+                          nextAlbumTitle = nextAlbum.title;
+                          nextAlbumPosition = 0;
+                          nextTrack = tracksInNextAlbum[0];
+                      }
+                  }
+                  // Last track of the last album, wrap around to first single (if exists & autoplaying)
+                  else if (this.singleTracks.length > 0 && this.autoplay) {
+                      nextSingleIndex = 0;
+                      nextTrack = this.singleTracks[0];
+                  }
+                  // Or wrap around to first album track (if no singles & autoplaying)
+                  else if (this.albums.length > 0 && this.autoplay) {
+                      const firstAlbum = this.albums[0];
+                      const tracksInFirstAlbum = this.albumTracks(firstAlbum);
+                      if (tracksInFirstAlbum.length > 0) {
+                          nextAlbumTitle = firstAlbum.title;
+                          nextAlbumPosition = 0;
+                          nextTrack = tracksInFirstAlbum[0];
+                      }
+                  }
               }
-              if ( t.title == this.selected_item.title ) {
-                found_track = true
+          }
+
+          // --- Play the determined next track ---
+          if (nextTrack) {
+              this.selected_item = nextTrack;
+              this.selected_item_index = nextSingleIndex; // Will be null if it's an album track
+              // Update album position if necessary (playAudio will handle deselecting others)
+              if (nextAlbumTitle !== null) {
+                  const targetAlbum = this.albums.find(a => a.title === nextAlbumTitle);
+                  if (targetAlbum) {
+                      targetAlbum.position = nextAlbumPosition;
+                  }
               }
-            })
-            if ( should_skip ) {
-                return
+              this.playAudio();
+          } else {
+              // No next track found (e.g., end of list, not autoplaying)
+              if (this.sound && typeof this.sound.stop === 'function') {
+                  this.sound.stop(); // Ensure sound stops if we reach the end
               }
-            if ( this.albums && this.albums.length > 0 ) {
-              next_song = this.albumTracks( this.albums[0] )
-              this.albums[0].position = 0
-              this.selected_item = next_song[0]
-              this.selected_item_index = ""
-              this.playAudio()
+              this.loaded = false; // Consider unloading if playback stops completely
+              this.selected_item = {}; // Clear selection
+              this.selected_item_index = null;
+              this.albums.forEach(a => a.position = null);
+          }
+        },
+        playPrevious() {
+            if (!this.selected_item || !this.loaded) return; // Don't proceed if nothing is selected/loaded
+
+            let prevTrack = null;
+            let prevSingleIndex = null;
+            let prevAlbumTitle = null;
+            let prevAlbumPosition = null;
+
+            // --- Case 1: Current track is a single ---
+            if (this.selected_item_index !== null) {
+                const currentIndex = this.selected_item_index;
+                if (currentIndex > 0) {
+                    // Play previous single track
+                    prevSingleIndex = currentIndex - 1;
+                    prevTrack = this.singleTracks[prevSingleIndex];
+                } else {
+                    // First single track, move to last track of last album (if exists)
+                    if (this.albums.length > 0) {
+                        const lastAlbum = this.albums[this.albums.length - 1];
+                        const tracksInLastAlbum = this.albumTracks(lastAlbum);
+                        if (tracksInLastAlbum.length > 0) {
+                            prevAlbumTitle = lastAlbum.title;
+                            prevAlbumPosition = tracksInLastAlbum.length - 1; // v-model index
+                            prevTrack = tracksInLastAlbum[prevAlbumPosition];
+                        }
+                    }
+                    // If no albums, wrap around to last single (optional, only if autoplaying?)
+                    else if (this.singleTracks.length > 0 && this.autoplay) {
+                        prevSingleIndex = this.singleTracks.length - 1;
+                        prevTrack = this.singleTracks[prevSingleIndex];
+                    }
+                }
             }
-            return
-          }
+            // --- Case 2: Current track is in an album ---
+            else if (this.selected_item.album) {
+                const currentAlbumTitle = this.selected_item.album;
+                const currentAlbumIndex = this.albums.findIndex(a => a.title === currentAlbumTitle);
+                const currentAlbum = this.albums[currentAlbumIndex];
+                const tracksInCurrentAlbum = this.albumTracks(currentAlbum);
+                const currentTrackIndexInAlbum = tracksInCurrentAlbum.findIndex(t => t.title === this.selected_item.title); // Index within the filtered list
 
-          position = this.selected_item.position
-          next_item = position + 1
-          album = this.albums.filter( a => a.title == this.selected_item.album )[0]
-          album.position = position
-          
-          next_song = this.albumTracks( album ).filter( t => t.position == next_item )
+                if (currentTrackIndexInAlbum > 0) {
+                    // Play previous track in the same album
+                    prevAlbumTitle = currentAlbumTitle;
+                    prevAlbumPosition = currentTrackIndexInAlbum - 1;
+                    prevTrack = tracksInCurrentAlbum[prevAlbumPosition];
+                } else {
+                    // First track in this album, move to the previous album (if exists)
+                    if (currentAlbumIndex > 0) {
+                        const prevAlbum = this.albums[currentAlbumIndex - 1];
+                        const tracksInPrevAlbum = this.albumTracks(prevAlbum);
+                        if (tracksInPrevAlbum.length > 0) {
+                            prevAlbumTitle = prevAlbum.title;
+                            prevAlbumPosition = tracksInPrevAlbum.length - 1;
+                            prevTrack = tracksInPrevAlbum[prevAlbumPosition];
+                        }
+                    }
+                    // First track of the first album, wrap around to last single (if exists)
+                    else if (this.singleTracks.length > 0) {
+                        prevSingleIndex = this.singleTracks.length - 1;
+                        prevTrack = this.singleTracks[prevSingleIndex];
+                    }
+                     // Or wrap around to last track of last album (if no singles & autoplaying)
+                    else if (this.albums.length > 0 && this.autoplay) {
+                        const lastAlbum = this.albums[this.albums.length - 1];
+                        const tracksInLastAlbum = this.albumTracks(lastAlbum);
+                        if (tracksInLastAlbum.length > 0) {
+                            prevAlbumTitle = lastAlbum.title;
+                            prevAlbumPosition = tracksInLastAlbum.length - 1;
+                            prevTrack = tracksInLastAlbum[prevAlbumPosition];
+                        }
+                    }
+                }
+            }
 
-          if ( next_song.length != 1 ) {
-            return
-          }
-          this.selected_item = next_song[0]
-          this.selected_item_index = ""
-          this.playAudio()
+            // --- Play the determined previous track ---
+            if (prevTrack) {
+                this.selected_item = prevTrack;
+                this.selected_item_index = prevSingleIndex; // Will be null if it's an album track
+                // Update album position if necessary (playAudio will handle deselecting others)
+                 if (prevAlbumTitle !== null) {
+                    const targetAlbum = this.albums.find(a => a.title === prevAlbumTitle);
+                    if (targetAlbum) {
+                        targetAlbum.position = prevAlbumPosition;
+                    }
+                }
+                this.playAudio();
+            } else {
+                // No previous track found (e.g., start of list) - stop or do nothing
+                 if (this.sound && typeof this.sound.stop === 'function') {
+                    this.sound.stop();
+                 }
+                 // Optionally reset selection?
+                 // this.loaded = false;
+                 // this.selected_item = {};
+                 // this.selected_item_index = null;
+                 // this.albums.forEach(a => a.position = null);
+            }
         },
         step() {
           const update = () => {
-          if (this.sound && this.sound.playing()) {
+          // Ensure sound exists, is loaded, and is playing before trying to get seek
+          if (this.sound && this.loaded && this.sound.playing()) {
             const seek = this.sound.seek() || 0;
-            // Prevent division by zero if duration isn't loaded yet
-            this.percentage = this.duration ? (seek / this.duration) * 100 : 0;
+            // Prevent division by zero if duration isn't loaded yet or is zero
+            this.percentage = (this.duration && this.duration > 0) ? (seek / this.duration) * 100 : 0;
 
-            // Continue stepping
+            // Continue stepping only if still playing
             requestAnimationFrame(update);
           }
           // If not playing, the loop stops automatically
           };
-          requestAnimationFrame(update);
+          // Only start the loop if playing
+          if (this.playing) {
+              requestAnimationFrame(update);
+          }
+        },
+        playFirstTrackOfAlbum(album) {
+           const tracks = this.albumTracks(album);
+           if (tracks.length > 0) {
+             const firstTrack = tracks[0];
+             this.selected_item = firstTrack;
+             // Find the album index to set its position
+             const albumIndex = this.albums.findIndex(a => a.title === album.title);
+             if (albumIndex !== -1) {
+               this.albums[albumIndex].position = 0; // Set v-model index for highlighting
+             }
+             this.playAudio();
+           }
         }
       },
     })

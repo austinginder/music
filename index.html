@@ -11,40 +11,58 @@
       [v-cloak] > * {
         display:none;
       }
+      body {
+        background-color: var(--v-background-base, white);
+      }
+      .theme--dark body {
+         background-color: var(--v-background-base, #121212);
+      }
     </style>
 </head>
 <body>
   <div id="app" v-cloak>
-    <v-app>
+    <v-app :dark="isDarkMode">
       <v-main>
-        <v-toolbar dark color="primary">
-            <v-toolbar-title>Austin Ginder's Music</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn href="https://austinginder.com" icon target="_blank" v-bind="attrs" v-on="on"><v-icon>mdi-home</v-icon></v-btn>
-              </template>
-              <span><v-icon small>mdi-open-in-new</v-icon> austinginder.com</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn href="https://open.spotify.com/artist/5L5nJdTTF0y6kjNagDLCpA" icon target="_blank" v-bind="attrs" v-on="on"><v-icon>mdi-spotify</v-icon></v-btn>
-              </template>
-              <span><v-icon small>mdi-open-in-new</v-icon> open.spotify.com</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn href="https://github.com/austinginder/music/" icon target="_blank" v-bind="attrs" v-on="on"><v-icon>mdi-github</v-icon></v-btn>
-              </template>
-              <span><v-icon small>mdi-open-in-new</v-icon> github.com/austinginder/music</span>
-            </v-tooltip>
+        <v-toolbar dark :color="isDarkMode ? '#1e1e1e' : 'primary'">
+          <v-toolbar-title>Austin Ginder's Music</v-toolbar-title>
+          <v-spacer></v-spacer>
+           <!-- Dark Mode Toggle Button -->
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon @click="toggleDarkMode" v-bind="attrs" v-on="on">
+                <!-- Dynamically change icon based on theme state -->
+                <v-icon>{{ isDarkMode ? 'mdi-white-balance-sunny' : 'mdi-weather-night' }}</v-icon>
+              </v-btn>
+            </template>
+            <span>Toggle Dark/Light Mode</span>
+          </v-tooltip>
+          <!-- Existing Icons -->
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn href="https://austinginder.com" icon target="_blank" v-bind="attrs" v-on="on"><v-icon>mdi-home</v-icon></v-btn>
+            </template>
+            <span><v-icon small>mdi-open-in-new</v-icon> austinginder.com</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn href="https://open.spotify.com/artist/5L5nJdTTF0y6kjNagDLCpA" icon target="_blank" v-bind="attrs" v-on="on"><v-icon>mdi-spotify</v-icon></v-btn>
+            </template>
+            <span><v-icon small>mdi-open-in-new</v-icon> open.spotify.com</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn href="https://github.com/austinginder/music/" icon target="_blank" v-bind="attrs" v-on="on"><v-icon>mdi-github</v-icon></v-btn>
+            </template>
+            <span><v-icon small>mdi-open-in-new</v-icon> github.com/austinginder/music</span>
+          </v-tooltip>
         </v-toolbar>
-        <v-card flat class="text-center mt-4">
+        <v-card flat class="text-center mt-4" color="transparent"> <!-- Make card transparent to use main background -->
             <v-icon size="20" class="mb-1">mdi-folder-music-outline</v-icon> {{ tracks.length }} tracks <v-icon size="20" class="ml-4 mb-1">mdi-album</v-icon> {{ albums.length }} albums <v-icon size="20" class="ml-4 mb-1">mdi-clock-outline</v-icon> {{ totalTime }} duration
         </v-card>
         <v-container>
             <v-row v-show="singleTracks.length > 0">
               <v-col cols="12">
+                <!-- Elevation works in both modes -->
                 <v-list class="elevation-2" max-width="800px" style="margin:auto;">
                   <v-list-item-group v-model="selected_item_index" color="primary">
                     <v-list-item
@@ -126,15 +144,14 @@
                       </v-list-item>
                       </v-list-item-group>
                   </v-list>
-                </v-col>
-                </v-row>
-              </v-card>
-              </v-col>
-            </v-row>
+                </v-card> <!-- Closing v-card for album -->
+              </v-col> <!-- Closing v-col for album -->
+            </v-row> <!-- Closing v-row for albums -->
         </v-container>
       </v-main>
       <v-footer fixed padless app>
-        <v-card width="100%" color="grey lighten-4">
+        <!-- Removed hardcoded color="grey lighten-4", let theme handle card color -->
+        <v-card width="100%">
           <v-card-text style="max-width:420px;margin:auto" class="text-center pa-2">
               <v-btn icon class="ma-2" @click.native="playPrevious()" :disabled="!loaded">
                   <v-icon large>mdi-skip-previous</v-icon>
@@ -168,7 +185,7 @@
               </v-tooltip>
               <v-slider v-model="playerVolume" prepend-icon="mdi-volume-high" max="1" step="0.01" min="0" v-show="!playerVolume"></v-slider>
               <v-progress-linear hide-details stream v-model="percentage" height="20" @change="sound.seek( duration * ( percentage / 100 ) )" :disabled="!loaded">
-                <span v-show="selected_item.title" class="white--text caption">Austin Ginder - {{ selected_item.title }}</span>
+                <span v-show="selected_item.title" class="caption white--text">Austin Ginder - {{ selected_item.title }}</span>
               </v-progress-linear>
               <p>{{ currentTime | formatTime }} / {{ duration | formatTime }}</p>
           </v-card-text>
@@ -182,7 +199,12 @@
   <script>
     new Vue({
       el: '#app',
-      vuetify: new Vuetify(),
+      // Initialize Vuetify with theme settings
+      vuetify: new Vuetify({
+        theme: {
+          dark: false // Default to light mode
+        }
+      }),
       data: {
           local_share_url: "",
           share_url: "",
@@ -199,49 +221,58 @@
           percentage: 0,
           sound: {},
           loaded: false,
+          isDarkMode: false
       },
       async mounted() {
-      // Fetch the data
-      try {
-        const response = await fetch('data.json'); // Path to your JSON file
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-
-        // Assign fetched data to Vue data properties
-        this.tracks = data.tracks;
-        this.albums = data.albums;
-        this.local_share_url = data.local_share_url;
-        this.share_url = data.share_url;
-
-        // Ensure album positions are initialized *after* albums are loaded
-        this.albums.forEach( a => this.$set(a, 'position', null) ); // Use $set for reactivity
-
-        if ( window.location.host.endsWith( ".localhost" ) ) {
-          this.share_url = this.local_share_url;
+        // Check localStorage for saved theme preference
+        const savedTheme = localStorage.getItem('darkMode');
+        if (savedTheme !== null) {
+          this.isDarkMode = savedTheme === 'true'; // Convert string back to boolean
+          // Apply the theme immediately via the Vuetify instance
+          this.$vuetify.theme.dark = this.isDarkMode;
         }
 
-      } catch (error) {
-        console.error("Could not load music data:", error);
-        // Handle the error appropriately, maybe show a message to the user
-      }
-
-      window.addEventListener('keydown', (e) => {
-        if (e.key == 32 || e.key == ' ') {
-          // Check if sound object exists and has methods before calling them
-          if (this.sound && typeof this.sound.playing === 'function' && this.loaded) {
-            this.sound.playing() ? this.sound.pause() : this.sound.play();
+        // Fetch the data
+        try {
+          const response = await fetch('data.json'); // Path to your JSON file
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-          e.preventDefault();
-        } else if (e.key === 'ArrowRight' && this.loaded) {
-            this.playNext();
-            e.preventDefault();
-        } else if (e.key === 'ArrowLeft' && this.loaded) {
-            this.playPrevious();
-            e.preventDefault();
+          const data = await response.json();
+
+          // Assign fetched data to Vue data properties
+          this.tracks = data.tracks;
+          this.albums = data.albums;
+          this.local_share_url = data.local_share_url;
+          this.share_url = data.share_url;
+
+          // Ensure album positions are initialized *after* albums are loaded
+          this.albums.forEach( a => this.$set(a, 'position', null) ); // Use $set for reactivity
+
+          if ( window.location.host.endsWith( ".localhost" ) ) {
+            this.share_url = this.local_share_url;
+          }
+
+        } catch (error) {
+          console.error("Could not load music data:", error);
+          // Handle the error appropriately, maybe show a message to the user
         }
-      });
+
+        window.addEventListener('keydown', (e) => {
+          if (e.key == 32 || e.key == ' ') {
+            // Check if sound object exists and has methods before calling them
+            if (this.sound && typeof this.sound.playing === 'function' && this.loaded) {
+              this.sound.playing() ? this.sound.pause() : this.sound.play();
+            }
+            e.preventDefault();
+          } else if (e.key === 'ArrowRight' && this.loaded) {
+              this.playNext();
+              e.preventDefault();
+          } else if (e.key === 'ArrowLeft' && this.loaded) {
+              this.playPrevious();
+              e.preventDefault();
+          }
+        });
       },
       filters: {
         formatTime: function ( value ) {
@@ -315,6 +346,11 @@
         }
       },
       methods: {
+        toggleDarkMode() {
+          this.isDarkMode = !this.isDarkMode; // Toggle the local state
+          this.$vuetify.theme.dark = this.isDarkMode; // Apply change to Vuetify
+          localStorage.setItem('darkMode', this.isDarkMode); // Save preference
+        },
         trackLength( tracks ) {
           var minutes = 0
           var seconds = 0

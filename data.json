@@ -2,6 +2,11 @@
     "local_share_url": "/music",
     "share_url": "https://f001.backblazeb2.com/file/Ginder/Music",
     "tracks": [
+      { "date": "April 19th, 2025", "author": "Austin Ginder", "title": "2025-04-19", "duration": "3:40", "audio": "Swamp Forest/2025-04-19", "album": "Swamp Forest", "position": 1 },
+      { "date": "April 23rd, 2025", "author": "Austin Ginder", "title": "2025-04-23", "duration": "2:43", "audio": "Swamp Forest/2025-04-23", "album": "Swamp Forest", "position": 2 },
+      { "date": "April 28th, 2025", "author": "Austin Ginder", "title": "2025-04-28", "duration": "2:27", "audio": "Swamp Forest/2025-04-28", "album": "Swamp Forest", "position": 3 },
+      { "date": "April 28th, 2025", "author": "Austin Ginder", "title": "2025-04-28B", "duration": "2:28", "audio": "Swamp Forest/2025-04-28B", "album": "Swamp Forest", "position": 4 },
+      { "date": "April 28th, 2025", "author": "Austin Ginder", "title": "2025-04-28C", "duration": "2:45", "audio": "Swamp Forest/2025-04-28C", "album": "Swamp Forest", "position": 5 },
       { "date": "October 3rd, 2024", "author": "Austin Ginder", "title": "2024-10-03", "duration": "2:50", "audio": "Unsorted/2024-10-03", "album": "Desert Adventures", "position": 1 },
       { "date": "October 22nd, 2024", "author": "Austin Ginder", "title": "2024-10-22", "duration": "3:15", "audio": "Unsorted/2024-10-22", "album": "Desert Adventures", "position": 2 },
       { "date": "November 8th, 2024", "author": "Austin Ginder", "title": "2024-11-08", "duration": "2:22", "audio": "Unsorted/2024-11-08", "album": "Desert Adventures", "position": 3 },
@@ -324,6 +329,7 @@
       { "date": "Dec 13th, 2021", "author": "Austin Ginder", "title": "C35", "duration": "4:00", "audio": "Hello XYZ/09-C35", "album": "Hello XYZ", "position": 9 }
     ],
     "albums": [
+      { "date": "January 1st 2026", "author": "Austin Ginder", "title": "Swamp Forest" },
       { "date": "December 1st 2025", "author": "Austin Ginder", "title": "Desert Adventures" },
       { "date": "July 1st 2025", "author": "Austin Ginder", "title": "Lands of Hidden Gems" },
       { "date": "January 1st 2025", "author": "Austin Ginder", "title": "Planet Drase" },

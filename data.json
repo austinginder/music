@@ -2,6 +2,12 @@
     "local_share_url": "/music",
     "share_url": "https://f001.backblazeb2.com/file/Ginder/Music",
     "tracks": [
+      { "date": "July 29th, 2025", "author": "Austin Ginder", "title": "2025-07-29", "duration": "3:07", "audio": "Cosmic Worlds/2025-07-29", "album": "Cosmic Worlds", "position": 1 },
+      { "date": "July 29th, 2025", "author": "Austin Ginder", "title": "2025-07-29b", "duration": "2:40", "audio": "Cosmic Worlds/2025-07-29b", "album": "Cosmic Worlds", "position": 2 },
+      { "date": "August 12th, 2025", "author": "Austin Ginder", "title": "2025-08-12", "duration": "3:03", "audio": "Cosmic Worlds/2025-08-12", "album": "Cosmic Worlds", "position": 3 },
+      { "date": "August 16th, 2025", "author": "Austin Ginder", "title": "2025-08-16", "duration": "2:40", "audio": "Cosmic Worlds/2025-08-16", "album": "Cosmic Worlds", "position": 4 },
+      { "date": "August 31st, 2025", "author": "Austin Ginder", "title": "2025-08-31", "duration": "2:18", "audio": "Cosmic Worlds/2025-08-31", "album": "Cosmic Worlds", "position": 5 },
+      { "date": "September 1st, 2025", "author": "Austin Ginder", "title": "2025-09-01", "duration": "2:47", "audio": "Cosmic Worlds/2025-09-01", "album": "Cosmic Worlds", "position": 6 },
       { "date": "April 19th, 2025", "author": "Austin Ginder", "title": "2025-04-19", "duration": "3:40", "audio": "Swamp Forest/2025-04-19", "album": "Swamp Forest", "position": 1 },
       { "date": "April 23rd, 2025", "author": "Austin Ginder", "title": "2025-04-23", "duration": "2:43", "audio": "Swamp Forest/2025-04-23", "album": "Swamp Forest", "position": 2 },
       { "date": "April 28th, 2025", "author": "Austin Ginder", "title": "2025-04-28", "duration": "2:27", "audio": "Swamp Forest/2025-04-28", "album": "Swamp Forest", "position": 3 },
@@ -12,6 +18,8 @@
       { "date": "May 2nd, 2025", "author": "Austin Ginder", "title": "2025-05-02", "duration": "4:00", "audio": "Swamp Forest/2025-05-02", "album": "Swamp Forest", "position": 8 },
       { "date": "May 9th, 2025", "author": "Austin Ginder", "title": "2025-05-09", "duration": "2:11", "audio": "Swamp Forest/2025-05-09", "album": "Swamp Forest", "position": 9 },
       { "date": "May 11th, 2025", "author": "Austin Ginder", "title": "2025-05-11", "duration": "2:02", "audio": "Swamp Forest/2025-05-11", "album": "Swamp Forest", "position": 10 },
+      { "date": "July 13th, 2025", "author": "Austin Ginder", "title": "2025-07-13", "duration": "2:21", "audio": "Swamp Forest/2025-07-13", "album": "Swamp Forest", "position": 11 },
+      { "date": "July 27th, 2025", "author": "Austin Ginder", "title": "2025-07-27", "duration": "2:41", "audio": "Swamp Forest/2025-07-27", "album": "Swamp Forest", "position": 12 },
       { "date": "October 3rd, 2024", "author": "Austin Ginder", "title": "2024-10-03", "duration": "2:50", "audio": "Unsorted/2024-10-03", "album": "Desert Adventures", "position": 1 },
       { "date": "October 22nd, 2024", "author": "Austin Ginder", "title": "2024-10-22", "duration": "3:15", "audio": "Unsorted/2024-10-22", "album": "Desert Adventures", "position": 2 },
       { "date": "November 8th, 2024", "author": "Austin Ginder", "title": "2024-11-08", "duration": "2:22", "audio": "Unsorted/2024-11-08", "album": "Desert Adventures", "position": 3 },
@@ -334,6 +342,7 @@
       { "date": "Dec 13th, 2021", "author": "Austin Ginder", "title": "C35", "duration": "4:00", "audio": "Hello XYZ/09-C35", "album": "Hello XYZ", "position": 9 }
     ],
     "albums": [
+      { "date": "April 1st 2026", "author": "Austin Ginder", "title": "Cosmic Worlds" },
       { "date": "January 1st 2026", "author": "Austin Ginder", "title": "Swamp Forest" },
       { "date": "December 1st 2025", "author": "Austin Ginder", "title": "Desert Adventures" },
       { "date": "July 1st 2025", "author": "Austin Ginder", "title": "Lands of Hidden Gems" },

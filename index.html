@@ -204,6 +204,7 @@
 
                         <div class="space-y-1 overflow-y-auto max-h-60 pr-1 custom-scrollbar">
                             <div v-for="(track, tIndex) in albumTracks(album)" :key="track.title"
+                                 v-show="!searchQuery || track.title.toLowerCase().includes(searchQuery.toLowerCase()) || album.title.toLowerCase().includes(searchQuery.toLowerCase())"
                                  @click="playTrack(track, null, album)"
                                  class="flex items-center py-2 px-2 rounded-lg cursor-pointer hover:bg-sky-50 dark:hover:bg-white/5 text-sm transition group"
                                  :class="{'bg-sky-50 dark:bg-white/10': isCurrentTrack(track)}">

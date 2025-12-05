@@ -59,12 +59,23 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
+
+        /* Animated Equalizer */
+        .playing-bars { display: flex; align-items: flex-end; height: 12px; gap: 2px; }
+        .bar { width: 3px; background-color: currentColor; animation: bounce 1s infinite ease-in-out; }
+        .bar:nth-child(1) { animation-duration: 0.6s; height: 40%; }
+        .bar:nth-child(2) { animation-duration: 0.9s; height: 100%; }
+        .bar:nth-child(3) { animation-duration: 0.7s; height: 70%; }
+        @keyframes bounce {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1); }
+        }
     </style>
 </head>
 <body class="bg-light-bg dark:bg-dark text-slate-700 dark:text-slate-200 transition-colors duration-300 font-sans antialiased pb-32 min-h-screen bg-light-gradient dark:bg-ocean-gradient">
 
 <div id="app" v-cloak>
-    <header class="sticky top-0 z-40 w-full glass bg-white/70 dark:bg-surface/70 border-b border-sky-100 dark:border-white/5 shadow-sm">
+    <header class="relative md:sticky top-0 z-40 w-full glass bg-white/70 dark:bg-surface/70 border-b border-sky-100 dark:border-white/5 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row items-center justify-between h-auto md:h-20 py-3 md:py-0 gap-4">
                 
@@ -188,8 +199,8 @@
                         <div v-else class="w-full h-full flex items-center justify-center text-slate-400/50">
                             <i class="ph ph-waves text-6xl"></i>
                         </div>
-                        <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center backdrop-blur-sm">
-                            <button class="w-16 h-16 rounded-full bg-primary text-dark flex items-center justify-center shadow-lg shadow-primary/50 transform scale-90 group-hover:scale-100 transition">
+                        <div class="absolute inset-0 bg-slate-900/40 opacity-0 md:group-hover:opacity-100 transition flex items-center justify-center backdrop-blur-sm pointer-events-none md:pointer-events-auto">
+                            <button class="w-16 h-16 rounded-full bg-primary text-dark flex items-center justify-center shadow-lg shadow-primary/50 transform scale-90 md:group-hover:scale-100 transition">
                                 <i class="ph-fill ph-play text-3xl ml-1"></i>
                             </button>
                         </div>
@@ -202,17 +213,20 @@
                             <span>{{ albumTracks(album).length }} tracks</span>
                         </div>
 
-                        <div class="space-y-1 overflow-y-auto max-h-60 pr-1 custom-scrollbar">
+                        <div class="space-y-1 md:overflow-y-auto md:max-h-60 md:pr-1 custom-scrollbar">
                             <div v-for="(track, tIndex) in albumTracks(album)" :key="track.title"
                                  v-show="!searchQuery || track.title.toLowerCase().includes(searchQuery.toLowerCase()) || album.title.toLowerCase().includes(searchQuery.toLowerCase())"
                                  @click="playTrack(track, null, album)"
                                  class="flex items-center py-2 px-2 rounded-lg cursor-pointer hover:bg-sky-50 dark:hover:bg-white/5 text-sm transition group"
                                  :class="{'bg-sky-50 dark:bg-white/10': isCurrentTrack(track)}">
                                 
-                                <span class="w-6 text-xs text-slate-400 font-mono text-center mr-2">
+                                <span class="w-6 text-xs text-slate-400 font-mono text-center mr-2 flex justify-center items-center h-4">
+                                    <i class="ph-fill ph-play text-slate-600 dark:text-slate-300 hidden group-hover:inline-block" v-if="!isCurrentTrack(track)"></i>
                                     <span class="group-hover:hidden" v-if="!isCurrentTrack(track)">{{ track.position }}</span>
-                                    <i class="ph-fill ph-speaker-high text-primary animate-pulse" v-else-if="isCurrentTrack(track) && playing"></i>
-                                    <i class="ph-fill ph-play text-slate-600 dark:text-slate-300 hidden group-hover:inline-block" v-else></i>
+                                    <div v-else-if="isCurrentTrack(track) && playing" class="playing-bars text-primary">
+                                        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                                    </div>
+                                    <i class="ph-fill ph-speaker-high text-primary" v-else></i>
                                 </span>
                                 
                                 <span class="flex-grow truncate" :class="isCurrentTrack(track) ? 'text-primary font-bold' : 'text-slate-600 dark:text-slate-300'">
@@ -228,61 +242,61 @@
         </section>
     </main>
 
-    <footer class="fixed bottom-4 left-4 right-4 z-50">
-        <div class="max-w-4xl mx-auto bg-white/95 dark:bg-surface/90 glass rounded-2xl shadow-2xl border border-sky-200 dark:border-white/10 p-4 transition-all duration-300 transform"
+    <footer class="fixed bottom-0 left-0 right-0 z-50">
+        <div class="max-w-4xl mx-auto bg-white/95 dark:bg-surface/90 glass border-t md:border border-sky-200 dark:border-white/10 p-3 md:p-4 transition-all duration-300 transform md:mb-4 md:rounded-2xl md:shadow-2xl"
              :class="{'translate-y-[150%]': !loaded && !selected_item.title}">
             
-             <div class="absolute top-0 left-4 right-4 -mt-[6px] group cursor-pointer h-3" 
-                  @click="seekTo($event)" ref="progressBar">
-                <div class="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div class="absolute -top-3 left-0 right-0 group cursor-pointer h-6 z-20" 
+                 @click="seekTo($event)" ref="progressBar">
+                <div class="absolute top-3 w-full h-1 bg-gray-200 dark:bg-gray-700 md:rounded-full overflow-hidden">
                     <div class="h-full bg-gradient-to-r from-secondary to-primary transition-all duration-100 ease-linear" :style="{ width: percentage + '%' }"></div>
                 </div>
-                <div class="absolute top-0 w-3 h-3 bg-primary ring-2 ring-white dark:ring-dark rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity -mt-[3px]"
+                <div class="absolute top-3 w-3 h-3 bg-primary ring-2 ring-white dark:ring-dark rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity -mt-[4px] pointer-events-none"
                      :style="{ left: percentage + '%' }"></div>
-             </div>
-
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
+            </div>
+    
+            <div class="flex flex-row items-center justify-between gap-3 mt-1">
                 
-                <div class="flex items-center w-full sm:w-1/3 gap-3 overflow-hidden">
-                    <div class="w-12 h-12 bg-sky-100 dark:bg-black/20 rounded-lg flex-shrink-0 flex items-center justify-center text-primary border border-white/5">
-                        <i class="ph-fill ph-music-note text-xl"></i>
+                <div class="flex items-center flex-1 md:flex-none md:w-1/3 gap-3 overflow-hidden min-w-0">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-sky-100 dark:bg-black/20 rounded-lg flex-shrink-0 flex items-center justify-center text-primary border border-white/5">
+                        <i class="ph-fill ph-music-note text-lg md:text-xl"></i>
                     </div>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <div class="font-bold truncate text-sm sm:text-base text-slate-800 dark:text-white">{{ selected_item.title || 'Select a track' }}</div>
                         <div class="text-xs text-slate-500 dark:text-slate-400 truncate font-mono">
                             {{ currentTimeFormatted }} / {{ durationFormatted }}
                         </div>
                     </div>
                 </div>
-
-                <div class="flex items-center justify-center gap-4 w-full sm:w-1/3">
-                    <button @click="playPrevious" :disabled="!loaded" class="text-slate-400 hover:text-primary disabled:opacity-30 transition">
-                        <i class="ph-fill ph-skip-back text-2xl"></i>
+    
+                <div class="flex items-center justify-center gap-3 md:gap-4 flex-none md:w-1/3">
+                    <button @click="playPrevious" :disabled="!loaded" class="text-slate-400 hover:text-primary disabled:opacity-30 transition p-2">
+                        <i class="ph-fill ph-skip-back text-xl md:text-2xl"></i>
                     </button>
                     
                     <button @click="togglePlay" :disabled="!loaded" 
-                            class="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-secondary text-dark flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition disabled:opacity-50 disabled:scale-100">
-                        <i class="ph-fill text-2xl" :class="playing ? 'ph-pause' : 'ph-play'"></i>
+                            class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-tr from-primary to-secondary text-dark flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition disabled:opacity-50 disabled:scale-100">
+                        <i class="ph-fill text-lg md:text-2xl" :class="playing ? 'ph-pause' : 'ph-play'"></i>
                     </button>
                     
-                    <button @click="playNext()" :disabled="!loaded" class="text-slate-400 hover:text-primary disabled:opacity-30 transition">
-                        <i class="ph-fill ph-skip-forward text-2xl"></i>
+                    <button @click="playNext()" :disabled="!loaded" class="text-slate-400 hover:text-primary disabled:opacity-30 transition p-2">
+                        <i class="ph-fill ph-skip-forward text-xl md:text-2xl"></i>
                     </button>
                 </div>
-
-                <div class="flex items-center justify-end gap-3 w-full sm:w-1/3">
+    
+                <div class="hidden md:flex items-center justify-end gap-3 md:w-1/3">
                     <button @click="toggleAutoplay" class="transition" :class="autoplay ? 'text-primary' : 'text-slate-400'">
                         <i class="ph ph-repeat text-xl"></i>
                     </button>
                     
                     <div class="flex items-center gap-2 group relative w-24">
                         <button @click="toggleMute" class="text-slate-400 hover:text-primary transition">
-                             <i class="ph-fill text-xl" :class="isMuted || playerVolume == 0 ? 'ph-speaker-x' : 'ph-speaker-high'"></i>
+                                <i class="ph-fill text-xl" :class="isMuted || playerVolume == 0 ? 'ph-speaker-x' : 'ph-speaker-high'"></i>
                         </button>
                         <input type="range" min="0" max="1" step="0.01" v-model="playerVolume" 
                                class="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer text-primary">
                     </div>
-
+    
                     <a v-if="loaded" :href="`${share_url}/${selected_item.audio}.mp3`" target="_blank" class="text-slate-400 hover:text-primary transition">
                         <i class="ph ph-download-simple text-xl"></i>
                     </a>
@@ -303,7 +317,7 @@
                 share_url: "",
                 tracks: [],
                 albums: [],
-                searchQuery: "", // Added Search State
+                searchQuery: "", 
                 
                 selected_item: {},
                 selected_item_index: null, 
@@ -318,7 +332,7 @@
                 percentage: 0,
                 sound: null,
                 loaded: false,
-                isDarkMode: true // Default to Dark/Deep Sea
+                isDarkMode: true 
             }
         },
         computed: {
@@ -368,15 +382,26 @@
                 if(val) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
                 localStorage.setItem('darkMode', val);
+            },
+            // Dynamic Browser Title Logic
+            selected_item(newItem) {
+                if (newItem && newItem.title) {
+                    document.title = `▶ ${newItem.title} - Austin Ginder`;
+                } else {
+                    document.title = "Austin Ginder's Music";
+                }
+            },
+            playing(isPlaying) {
+                if (!this.selected_item.title) return;
+                const prefix = isPlaying ? '▶ ' : '❚❚ ';
+                document.title = `${prefix}${this.selected_item.title} - Austin Ginder`;
             }
         },
         async mounted() {
             // Theme Init
             const savedTheme = localStorage.getItem('darkMode');
-            // Default to true (Deep Sea) if not set
             this.isDarkMode = savedTheme === null ? true : savedTheme === 'true';
             
-            // Trigger the class addition manually on mount
             if(this.isDarkMode) document.documentElement.classList.add('dark');
 
             // Data Fetch
@@ -397,7 +422,7 @@
 
             // Keyboard Shortcuts
             window.addEventListener('keydown', (e) => {
-                if (e.target.tagName === 'INPUT') return; // Don't trigger shortcuts when typing in search
+                if (e.target.tagName === 'INPUT') return; 
                 
                 if (e.code === 'Space') {
                     e.preventDefault();
@@ -465,7 +490,6 @@
                 this.percentage = clickedPercentage * 100;
             },
             
-            // Unified Play Logic
             playTrack(item, index, album) {
                 this.selected_item = item;
                 
@@ -536,9 +560,6 @@
                 }
             },
             
-            // Note: Navigation logic uses the Full Lists, not Filtered lists
-            // This ensures if you search for "Song A" then hit next, it plays "Song B" from the album/list naturally,
-            // rather than stopping because "Song B" is hidden by the search filter.
             playNext(fromAuto = false) {
                 if (!fromAuto && !this.autoplay && fromAuto) return;
 

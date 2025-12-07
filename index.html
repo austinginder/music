@@ -208,9 +208,21 @@
 
                     <div class="p-5 flex-grow flex flex-col">
                         <h3 class="font-bold text-lg mb-1 text-slate-800 dark:text-white truncate">{{ album.title }}</h3>
-                        <div class="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-4 font-medium uppercase tracking-wide">
-                            <span>{{ album.date }}</span>
-                            <span>{{ albumTracks(album).length }} tracks</span>
+                        <div class="flex flex-col gap-1 mb-4">
+                            <div class="text-xs font-bold text-secondary dark:text-primary uppercase tracking-wider">
+                                {{ album.date }}
+                            </div>
+                            
+                            <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                                <span class="flex items-center gap-1">
+                                    <i class="ph-fill ph-music-notes-simple"></i>
+                                    {{ albumTracks(album).length }} Tracks
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <i class="ph-fill ph-clock"></i>
+                                    {{ totalAlbumDuration(album) }}
+                                </span>
+                            </div>
                         </div>
 
                         <div class="space-y-1 md:overflow-y-auto md:max-h-60 md:pr-1 custom-scrollbar">
@@ -469,6 +481,13 @@
             isCurrentTrack(item) {
                 return this.selected_item && this.selected_item.title === item.title;
             },
+            totalAlbumDuration(album) {
+                let seconds = 0;
+                this.albumTracks(album).forEach(track => {
+                    seconds += this.parseDuration(track.duration);
+                });
+                return this.formatTime(seconds);
+            },
             togglePlay() {
                 if (!this.sound) return;
                 if (this.playing) {
@@ -559,7 +578,6 @@
                     requestAnimationFrame(this.step);
                 }
             },
-            
             playNext(fromAuto = false) {
                 if (!fromAuto && !this.autoplay && fromAuto) return;
 
